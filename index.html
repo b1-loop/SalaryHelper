@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
-    <title>Löneverktyg MVP Diamond</title>
+    <title>Löneverktyg MVP Master</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -14,6 +14,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+        /* --- CSS VARIABLER FÖR LJUST / MÖRKT TEMA --- */
         :root {
             --bg-color: #f8fafc;
             --text-color: #0f172a;
@@ -51,6 +52,7 @@
             transition: all 0.3s;
         }
 
+        /* Navigation */
         nav {
             background: var(--nav-bg);
             padding: 1rem 2rem;
@@ -91,6 +93,7 @@
             color: var(--text-color);
         }
 
+        /* Nätverksindikator */
         .network-badge {
             padding: 0.4rem 0.8rem;
             border-radius: 20px;
@@ -118,6 +121,7 @@
             margin: 0 auto;
         }
 
+        /* Login Screen */
         #login-screen {
             display: flex;
             flex-direction: column;
@@ -160,6 +164,10 @@
             outline: none;
         }
 
+            .pin-input:focus {
+                border-color: #3b82f6;
+            }
+
         .login-btn {
             display: block;
             width: 100%;
@@ -188,6 +196,7 @@
                 box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
             }
 
+        /* Klockan */
         .live-clock-container {
             text-align: center;
             margin-bottom: 2.5rem;
@@ -201,6 +210,7 @@
             border: 1px solid var(--card-border);
         }
 
+        /* Kort */
         .card {
             background: var(--card-bg);
             padding: 2rem;
@@ -219,6 +229,7 @@
                 align-items: center;
             }
 
+        /* Knappar */
         .btn {
             padding: 0.75rem 1.5rem;
             font-size: 0.95rem;
@@ -314,6 +325,7 @@
             background-color: #ef4444;
         }
 
+        /* Formulär & Sök */
         .form-group {
             margin-bottom: 1.25rem;
             width: 100%;
@@ -354,6 +366,7 @@
             margin-bottom: 1rem;
         }
 
+        /* Tabeller & Listor */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -376,7 +389,6 @@
             background-color: var(--table-hover);
         }
 
-        /* KLICKBARA NAMN I TABELLEN */
         .clickable-name {
             color: #3b82f6;
             cursor: pointer;
@@ -409,6 +421,7 @@
             font-size: 0.8rem;
         }
 
+        /* Badges */
         .badge {
             padding: 0.35rem 0.85rem;
             border-radius: 9999px;
@@ -442,6 +455,7 @@
                 color: #ec4899;
             }
 
+        /* Stats */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -472,6 +486,7 @@
                 font-size: 1.5rem;
             }
 
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -494,7 +509,7 @@
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
             width: 90%;
-            max-width: 500px;
+            max-width: 550px;
             border-radius: 16px;
             padding: 2rem;
             position: relative;
@@ -514,6 +529,11 @@
             background: transparent;
         }
 
+            .modal-close:hover {
+                color: var(--text-color);
+            }
+
+        /* Kvitto Design */
         .receipt-row {
             display: flex;
             justify-content: space-between;
@@ -531,6 +551,7 @@
             margin-top: 1rem;
         }
 
+        /* Toasts */
         #toast-container {
             position: fixed;
             bottom: 20px;
@@ -602,13 +623,13 @@
 </head>
 <body>
 
-    <div id="toast-container"></div>
+    <div id="toast-container" aria-live="polite"></div>
 
     <div id="login-screen">
         <div class="login-box">
             <h1>⏱️ TimeTrack Pro</h1>
             <p style="margin-bottom: 2rem; color: #94a3b8;">Säker inloggning. Ange PIN: <strong>1234</strong></p>
-            <input type="password" id="login-pin" class="pin-input" placeholder="****" maxlength="4" autocomplete="off">
+            <input type="password" id="login-pin" class="pin-input" placeholder="****" maxlength="4" autocomplete="off" aria-label="PIN-kod">
             <button class="login-btn worker" onclick="doLogin('worker')">👨‍🔧 Logga in som Arbetare</button>
             <button class="login-btn admin" onclick="doLogin('admin')">👔 Logga in som Admin</button>
         </div>
@@ -618,16 +639,18 @@
         <nav>
             <button id="nav-worker-btn" onclick="showView('worker-view')">👨‍🔧 Min Vy</button>
             <button id="nav-admin-btn" onclick="showView('admin-view')">👔 Admin</button>
-            <select id="user-selector" onchange="switchUser(this.value)"></select>
+
+            <select id="user-selector" onchange="switchUser(this.value)" aria-label="Välj användare"></select>
+
             <div style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
                 <div id="network-status" class="network-badge online">🟢 Online</div>
-                <button onclick="toggleDarkMode()" title="Byt tema">🌙 Tema</button>
+                <button onclick="toggleDarkMode()" title="Byt tema" aria-label="Byt till mörkt eller ljust tema">🌙 Tema</button>
                 <button onclick="logout()" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Logga ut</button>
             </div>
         </nav>
 
         <div class="container">
-            <div id="live-clock" class="live-clock-container">Laddar tid...</div>
+            <div id="live-clock" class="live-clock-container" aria-live="polite">Laddar tid...</div>
 
             <div id="worker-view">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
@@ -658,10 +681,22 @@
                 <div class="card">
                     <h3>📅 Mitt Schema</h3>
                     <ul id="schedule-list" class="schedule-list"></ul>
+
                     <h4 style="margin-top: 2rem;">Lägg till nytt pass</h4>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <div class="form-group" style="margin-bottom:0;"><input type="text" id="new-shift-day" placeholder="Dag"></div>
-                        <div class="form-group" style="margin-bottom:0;"><input type="text" id="new-shift-time" placeholder="Tid"></div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <div class="form-group" style="margin-bottom:0; flex: 1.5;">
+                            <label for="new-shift-day" style="display:none;">Datum</label>
+                            <input type="date" id="new-shift-day" required title="Välj datum">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0; flex: 1;">
+                            <label for="new-shift-start" style="display:none;">Starttid</label>
+                            <input type="time" id="new-shift-start" required title="Välj starttid">
+                        </div>
+                        <span style="font-weight: bold; color: var(--text-muted);">-</span>
+                        <div class="form-group" style="margin-bottom:0; flex: 1;">
+                            <label for="new-shift-end" style="display:none;">Sluttid</label>
+                            <input type="time" id="new-shift-end" required title="Välj sluttid">
+                        </div>
                         <button class="btn btn-secondary" style="width:auto; margin-top:0;" onclick="addShift()">Lägg till</button>
                     </div>
                 </div>
@@ -673,7 +708,7 @@
                 <div class="card">
                     <h3>📊 Kostnadsfördelning</h3>
                     <div style="position: relative; height:250px; width:100%;">
-                        <canvas id="salaryChart"></canvas>
+                        <canvas id="salaryChart" aria-label="Stapeldiagram över löner"></canvas>
                     </div>
                 </div>
 
@@ -681,8 +716,8 @@
                     <div>
                         <div class="card">
                             <h3>➕ Ny Anställd</h3>
-                            <div class="form-group"><label>Namn</label><input type="text" id="new-name" placeholder="T.ex. Anna Svensson"></div>
-                            <div class="form-group"><label>Timlön (kr)</label><input type="number" id="new-wage" placeholder="T.ex. 160"></div>
+                            <div class="form-group"><label for="new-name">Namn</label><input type="text" id="new-name" placeholder="T.ex. Anna Svensson"></div>
+                            <div class="form-group"><label for="new-wage">Timlön (kr)</label><input type="number" id="new-wage" placeholder="T.ex. 160" min="1"></div>
                             <button class="btn btn-primary" onclick="addEmployee()">Lägg till person</button>
                         </div>
                         <div class="card">
@@ -692,8 +727,11 @@
                     </div>
 
                     <div class="card" style="overflow-x: auto;">
-                        <h3 style="align-items: center;">💰 Löneöversikt <button class="btn btn-export" onclick="exportCSV()">📥 Exportera CSV</button></h3>
-                        <input type="text" id="search-employee" class="search-bar" placeholder="Sök efter anställd..." onkeyup="filterTable()">
+                        <h3 style="align-items: center; display: flex; justify-content: space-between;">
+                            💰 Löneöversikt
+                            <button class="btn btn-export" onclick="exportCSV()">📥 Exportera CSV</button>
+                        </h3>
+                        <input type="text" id="search-employee" class="search-bar" placeholder="Sök efter anställd..." onkeyup="filterTable()" aria-label="Sök anställd">
                         <table style="min-width: 550px;">
                             <thead>
                                 <tr><th>Anställd</th><th>Status</th><th>Timmar</th><th>OB</th><th>Total lön</th><th>Åtgärd</th></tr>
@@ -706,10 +744,10 @@
         </div>
     </div>
 
-    <div id="payslip-modal" class="modal">
+    <div id="payslip-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="payslip-title">
         <div class="modal-content">
-            <button class="modal-close" onclick="closePayslipModal()">✖</button>
-            <h2 style="margin-top:0; border-bottom: 2px solid var(--card-border); padding-bottom: 1rem;">Lönespecifikation</h2>
+            <button class="modal-close" onclick="closePayslipModal()" aria-label="Stäng kvitto">✖</button>
+            <h2 id="payslip-title" style="margin-top:0; border-bottom: 2px solid var(--card-border); padding-bottom: 1rem;">Lönespecifikation</h2>
             <p style="color: var(--text-muted); font-size: 0.9rem;">Period: <span id="payslip-date"></span></p>
             <p style="font-weight: bold; font-size: 1.1rem; margin-bottom: 2rem;">Namn: <span id="payslip-name" style="color: #3b82f6;"></span></p>
             <div class="receipt-row"><span>Vanlig Arbetstid (<span id="payslip-reg-hours">0</span>h á <span id="payslip-reg-wage">0</span> kr)</span><span id="payslip-reg-total">0 kr</span></div>
@@ -719,17 +757,17 @@
         </div>
     </div>
 
-    <div id="edit-modal" class="modal">
+    <div id="edit-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeEditModal()">✖</button>
+            <button class="modal-close" onclick="closeEditModal()" aria-label="Stäng redigeringsruta">✖</button>
 
             <h2 id="edit-modal-title" style="margin-top:0; color: #3b82f6;">Profil & Pass</h2>
 
             <input type="hidden" id="edit-emp-index">
 
             <div style="display: flex; gap: 1rem;">
-                <div class="form-group"><label>Namn</label><input type="text" id="edit-name"></div>
-                <div class="form-group"><label>Timlön (kr)</label><input type="number" id="edit-wage"></div>
+                <div class="form-group"><label for="edit-name">Namn</label><input type="text" id="edit-name"></div>
+                <div class="form-group"><label for="edit-wage">Timlön (kr)</label><input type="number" id="edit-wage" min="1"></div>
             </div>
             <button class="btn btn-primary" onclick="saveEmployeeEdit()">Spara Grunduppgifter</button>
 
@@ -739,15 +777,25 @@
             <ul id="modal-schedule-list" class="schedule-list" style="margin-bottom: 1.5rem;"></ul>
 
             <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display:block; margin-bottom:0.4rem;">Lägg till pass för denna person</label>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <input type="text" id="modal-shift-day" placeholder="Dag (t.ex. Fredag)" class="form-group input" style="margin-bottom:0;">
-                <input type="text" id="modal-shift-time" placeholder="Tid (t.ex. 08-16)" class="form-group input" style="margin-bottom:0;">
+
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom:0; flex: 1.5;">
+                    <input type="date" id="modal-shift-day" required title="Välj datum">
+                </div>
+                <div class="form-group" style="margin-bottom:0; flex: 1;">
+                    <input type="time" id="modal-shift-start" required title="Välj starttid">
+                </div>
+                <span style="font-weight: bold; color: var(--text-muted);">-</span>
+                <div class="form-group" style="margin-bottom:0; flex: 1;">
+                    <input type="time" id="modal-shift-end" required title="Välj sluttid">
+                </div>
                 <button class="btn btn-secondary" style="margin-top:0; width:auto;" onclick="addShiftFromModal()">Lägg till</button>
             </div>
         </div>
     </div>
 
     <script>
+        // --- 1. TOASTS & KLOCKA & NÄTVERK ---
         function showToast(message, type = '') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerText = message;
@@ -770,6 +818,7 @@
         window.addEventListener('online', () => updateNetworkStatus(true)); window.addEventListener('offline', () => updateNetworkStatus(false));
         if (!navigator.onLine) document.getElementById('network-status').className = 'network-badge offline';
 
+        // --- 2. DARK MODE ---
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode');
             localStorage.setItem('mvp_theme', isDark ? 'dark' : 'light');
@@ -777,8 +826,9 @@
         }
         if (localStorage.getItem('mvp_theme') === 'dark') document.body.classList.add('dark-mode');
 
+        // --- 3. DATABAS ---
         const defaultEmployees = [
-            { name: "Alex (Du)", hours: 16, obHours: 0, wage: 150, status: "Utloggad", schedule: [{ day: "Måndag", time: "08:00 - 16:00" }] },
+            { name: "Alex (Du)", hours: 16, obHours: 0, wage: 150, status: "Utloggad", schedule: [{ day: "2026-02-27", time: "08:00 - 16:00" }] },
             { name: "Sara Andersson", hours: 32, obHours: 8, wage: 160, status: "Inloggad", schedule: [] },
             { name: "Pelle Sjuk", hours: 0, obHours: 0, wage: 140, status: "Sjuk", schedule: [] }
         ];
@@ -789,6 +839,7 @@
         function saveData() { localStorage.setItem('mvp_pro_employees', JSON.stringify(employees)); localStorage.setItem('mvp_pro_logs', JSON.stringify(logs)); }
         window.onload = function () { updateClock(); updateDropdown(); };
 
+        // --- 4. INLOGGNING (MED PIN 1234) ---
         function doLogin(role) {
             const pinInput = document.getElementById('login-pin').value;
             if (pinInput !== "1234") { showToast("Fel PIN-kod. Prova '1234'", "error"); document.getElementById('login-pin').value = ''; return; }
@@ -799,6 +850,7 @@
         }
         function logout() { document.getElementById('app-content').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); document.getElementById('login-pin').value = ''; showToast("Utloggad."); }
 
+        // --- 5. ARBETAR-VYN OCH LOGIK ---
         function updateDropdown() {
             const selector = document.getElementById('user-selector'); selector.innerHTML = '';
             employees.forEach((emp, i) => selector.innerHTML += `<option value="${i}">Profil: ${emp.name}</option>`); selector.value = currentUserIndex;
@@ -812,7 +864,7 @@
             document.getElementById('worker-hours').innerText = user.hours + "h"; document.getElementById('worker-ob-hours').innerText = (user.obHours || 0) + "h"; document.getElementById('worker-wage').innerText = user.wage + " kr/h";
             const badge = document.getElementById('worker-status-badge'); badge.innerText = user.status; badge.className = `badge ${user.status.toLowerCase()}`;
             const scheduleUl = document.getElementById('schedule-list'); scheduleUl.innerHTML = '';
-            user.schedule.forEach((shift, i) => scheduleUl.innerHTML += `<li><div><strong>${shift.day}</strong> <span style="margin-left:10px; color:var(--text-muted);">${shift.time}</span></div><button class="btn-sm btn-delete" onclick="deleteShiftWorker(${i})">Ta bort</button></li>`);
+            user.schedule.forEach((shift, i) => scheduleUl.innerHTML += `<li><div><strong>${shift.day}</strong> <span style="margin-left:10px; color:var(--text-muted);">${shift.time}</span></div><button class="btn-sm btn-delete" aria-label="Ta bort pass" onclick="deleteShiftWorker(${i})">✖ Ta bort</button></li>`);
         }
 
         function addLog(action) { logs.unshift({ name: employees[currentUserIndex].name, action: action, time: new Date().toLocaleTimeString('sv-SE') }); if (logs.length > 8) logs.pop(); saveData(); }
@@ -842,9 +894,34 @@
             } else { showToast("Redan utcheckad.", "error"); }
         }
 
-        function setStatus(status) { employees[currentUserIndex].status = status; addLog(`Status: ${status}`); saveData(); loadWorkerView(); showToast(`Status: ${status}`); }
-        function addShift() { const day = document.getElementById('new-shift-day').value; const time = document.getElementById('new-shift-time').value; if (day && time) { employees[currentUserIndex].schedule.push({ day, time }); document.getElementById('new-shift-day').value = ''; document.getElementById('new-shift-time').value = ''; saveData(); loadWorkerView(); showToast("Pass tillagt!"); } }
-        function deleteShiftWorker(i) { employees[currentUserIndex].schedule.splice(i, 1); saveData(); loadWorkerView(); }
+        function setStatus(status) { employees[currentUserIndex].status = status; addLog(`Satte status: ${status}`); saveData(); loadWorkerView(); showToast(`Status: ${status}`); }
+
+        // UPPDATERAD LOGIK FÖR VALIDERING AV SCHEMA
+        function addShift() {
+            const dateVal = document.getElementById('new-shift-day').value;
+            const startVal = document.getElementById('new-shift-start').value;
+            const endVal = document.getElementById('new-shift-end').value;
+
+            if (!dateVal || !startVal || !endVal) {
+                showToast("Fyll i datum och båda tiderna.", "warning");
+                return;
+            }
+            if (startVal >= endVal) {
+                showToast("Sluttiden måste vara efter starttiden.", "error");
+                return;
+            }
+
+            const timeString = `${startVal} - ${endVal}`;
+            employees[currentUserIndex].schedule.push({ day: dateVal, time: timeString });
+
+            document.getElementById('new-shift-day').value = '';
+            document.getElementById('new-shift-start').value = '';
+            document.getElementById('new-shift-end').value = '';
+
+            saveData(); loadWorkerView(); showToast("Pass tillagt!", "success");
+        }
+
+        function deleteShiftWorker(i) { employees[currentUserIndex].schedule.splice(i, 1); saveData(); loadWorkerView(); showToast("Pass borttaget", "warning"); }
 
         function openPayslipModal() {
             const user = employees[currentUserIndex]; const obHours = user.obHours || 0; const obWage = user.wage * 1.5;
@@ -855,6 +932,7 @@
         }
         function closePayslipModal() { document.getElementById('payslip-modal').classList.remove('active'); }
 
+        // --- 6. ADMIN-VYN ---
         function loadAdminData() {
             const tbody = document.getElementById('payroll-body'); tbody.innerHTML = '';
             let chartLabels = []; let chartRegularPay = []; let chartOBPay = [];
@@ -873,8 +951,8 @@
                         <td><strong>${totalSalary.toLocaleString('sv-SE')} kr</strong></td>
                         <td>
                             <div class="btn-action-group">
-                                <button class="btn-sm btn-edit" onclick="openEditModal(${index})">📅 Profil & Pass</button>
-                                <button class="btn-sm btn-delete" onclick="deleteEmployee(${index})">✖</button>
+                                <button class="btn-sm btn-edit" aria-label="Redigera profil" onclick="openEditModal(${index})">📅 Profil & Pass</button>
+                                <button class="btn-sm btn-delete" aria-label="Radera profil" onclick="deleteEmployee(${index})">✖</button>
                             </div>
                         </td>
                     </tr>`;
@@ -894,16 +972,35 @@
             }
         }
 
+        // STRIKTARE VALIDERING: Lägga till
         function addEmployee() {
-            const name = document.getElementById('new-name').value; const wage = parseInt(document.getElementById('new-wage').value);
-            if (name && wage) { employees.push({ name, hours: 0, obHours: 0, wage, status: "Utloggad", schedule: [] }); document.getElementById('new-name').value = ''; document.getElementById('new-wage').value = ''; saveData(); loadAdminData(); updateDropdown(); showToast("Person tillagd", "success"); }
+            const name = document.getElementById('new-name').value;
+            const wage = parseInt(document.getElementById('new-wage').value);
+
+            if (!name || isNaN(wage)) {
+                showToast("Fyll i både namn och timlön.", "warning");
+                return;
+            }
+            if (wage <= 0) {
+                showToast("Timlönen måste vara högre än 0 kr.", "error");
+                return;
+            }
+
+            employees.push({ name, hours: 0, obHours: 0, wage, status: "Utloggad", schedule: [] });
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-wage').value = '';
+            saveData(); loadAdminData(); updateDropdown();
+            showToast("Person tillagd i systemet!", "success");
         }
+
         function deleteEmployee(index) { if (confirm(`Radera ${employees[index].name}?`)) { employees.splice(index, 1); saveData(); loadAdminData(); updateDropdown(); showToast("Anställd raderad"); } }
+
         function exportCSV() {
             let csvContent = "data:text/csv;charset=utf-8,Namn;Status;Vanliga Timmar;OB-Timmar;Timlon;Total Lon (kr)\n";
             employees.forEach(emp => { let ob = emp.obHours || 0; let tot = (emp.hours * emp.wage) + (ob * (emp.wage * 1.5)); csvContent += `${emp.name};${emp.status};${emp.hours};${ob};${emp.wage};${tot}\n`; });
-            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Lonelista_Export.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("Nedladdad!", "success");
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Lonelista_Export.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("Lönelistan laddas ner!", "success");
         }
+
         function updateChart(labels, regularData, obData) {
             const ctx = document.getElementById('salaryChart').getContext('2d');
             Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b'; Chart.defaults.font.family = 'Inter';
@@ -911,6 +1008,7 @@
             window.myChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Vanlig Lön (kr)', data: regularData, backgroundColor: '#3b82f6', borderRadius: 4 }, { label: 'OB-tillägg (kr)', data: obData, backgroundColor: '#8b5cf6', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, border: { display: false } } }, plugins: { legend: { position: 'top' } } } });
         }
 
+        // --- 7. REDIGERINGS-MODAL (ADMIN) ---
         function openEditModal(index) {
             const emp = employees[index];
             document.getElementById('edit-emp-index').value = index;
@@ -921,20 +1019,60 @@
             document.getElementById('edit-modal').classList.add('active');
         }
         function closeEditModal() { document.getElementById('edit-modal').classList.remove('active'); }
+
+        // STRIKTARE VALIDERING: Redigera
         function saveEmployeeEdit() {
             const index = document.getElementById('edit-emp-index').value;
-            const newName = document.getElementById('edit-name').value; const newWage = parseInt(document.getElementById('edit-wage').value);
-            if (newName && newWage) { employees[index].name = newName; employees[index].wage = newWage; saveData(); loadAdminData(); updateDropdown(); showToast("Sparat!", "success"); closeEditModal(); }
+            const newName = document.getElementById('edit-name').value;
+            const newWage = parseInt(document.getElementById('edit-wage').value);
+
+            if (!newName || isNaN(newWage)) {
+                showToast("Både namn och lön krävs.", "warning");
+                return;
+            }
+            if (newWage <= 0) {
+                showToast("Lönen kan inte vara 0 eller negativ.", "error");
+                return;
+            }
+
+            employees[index].name = newName;
+            employees[index].wage = newWage;
+            saveData(); loadAdminData(); updateDropdown();
+            showToast("Ändringarna har sparats!", "success");
+            closeEditModal();
         }
+
         function renderModalSchedule(empIndex) {
             const scheduleList = document.getElementById('modal-schedule-list'); scheduleList.innerHTML = ''; const emp = employees[empIndex];
             if (emp.schedule.length === 0) { scheduleList.innerHTML = '<li><em style="color:var(--text-muted)">Inget schema inlagt.</em></li>'; return; }
-            emp.schedule.forEach((shift, shiftIndex) => scheduleList.innerHTML += `<li><div><strong>${shift.day}</strong> <span style="margin-left:10px; color:var(--text-muted);">${shift.time}</span></div><button class="btn-sm btn-delete" onclick="deleteShiftFromModal(${empIndex}, ${shiftIndex})">✖</button></li>`);
+            emp.schedule.forEach((shift, shiftIndex) => scheduleList.innerHTML += `<li><div><strong>${shift.day}</strong> <span style="margin-left:10px; color:var(--text-muted);">${shift.time}</span></div><button class="btn-sm btn-delete" aria-label="Ta bort pass" onclick="deleteShiftFromModal(${empIndex}, ${shiftIndex})">✖</button></li>`);
         }
-        function deleteShiftFromModal(empIndex, shiftIndex) { employees[empIndex].schedule.splice(shiftIndex, 1); saveData(); renderModalSchedule(empIndex); showToast("Pass borttaget."); }
+        function deleteShiftFromModal(empIndex, shiftIndex) { employees[empIndex].schedule.splice(shiftIndex, 1); saveData(); renderModalSchedule(empIndex); showToast("Pass borttaget.", "warning"); }
+
+        // UPPDATERAD VALIDERING: Lägg till schema från admin
         function addShiftFromModal() {
-            const empIndex = document.getElementById('edit-emp-index').value; const day = document.getElementById('modal-shift-day').value; const time = document.getElementById('modal-shift-time').value;
-            if (day && time) { employees[empIndex].schedule.push({ day, time }); document.getElementById('modal-shift-day').value = ''; document.getElementById('modal-shift-time').value = ''; saveData(); renderModalSchedule(empIndex); showToast("Pass tillagt!"); }
+            const empIndex = document.getElementById('edit-emp-index').value;
+            const dateVal = document.getElementById('modal-shift-day').value;
+            const startVal = document.getElementById('modal-shift-start').value;
+            const endVal = document.getElementById('modal-shift-end').value;
+
+            if (!dateVal || !startVal || !endVal) {
+                showToast("Fyll i datum och båda tiderna.", "warning");
+                return;
+            }
+            if (startVal >= endVal) {
+                showToast("Sluttiden måste vara efter starttiden.", "error");
+                return;
+            }
+
+            const timeString = `${startVal} - ${endVal}`;
+            employees[empIndex].schedule.push({ day: dateVal, time: timeString });
+
+            document.getElementById('modal-shift-day').value = '';
+            document.getElementById('modal-shift-start').value = '';
+            document.getElementById('modal-shift-end').value = '';
+
+            saveData(); renderModalSchedule(empIndex); showToast("Pass tillagt!", "success");
         }
     </script>
 </body>
