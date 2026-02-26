@@ -1,31 +1,87 @@
-# Lönekontor
-1. Arbetar-vyn (Worker Dashboard)
-Detta är det första arbetaren ser i sin telefon eller på datorn.
+⏱️ TimeTrack Pro - MVP (Diamond Edition) 💎
+Ett komplett, webbaserat löne- och stämplingsverktyg byggt som en Single Page Application (SPA) i en enda HTML-fil. Projektet är designat för att fungera som en avancerad, klickbar prototyp (MVP) för kundpresentationer.
 
-Stämpelklocka: Två stora, tydliga knappar för "Klocka In" och "Klocka Ut". Kanske en statusindikator som visar "Du är just nu: Inloggad".
+Applikationen kräver ingen backend eller databas för att demonstreras, utan använder webbläsarens localStorage för att spara data (timmar, scheman och personal) mellan sessioner. Den är dessutom förberedd som en PWA (Progressive Web App), vilket innebär att den kan sparas på mobilens hemskärm och fungera som en riktig app.
 
-Tidrapport: En enkel lista eller tabell som visar dagens och veckans arbetade timmar.
+✨ Huvudfunktioner
+Applikationen är uppdelad i två huvudvyer med rollbaserad åtkomst (PIN-skyddad demoinloggning):
 
-Mitt Schema: En liten sektion som visar kommande arbetspass (t.ex. "Måndag: 08:00 - 17:00").
+👨‍🔧 För Arbetaren (Min Vy)
+Avancerad Stämpelklocka: Klocka in (med GPS-spårning/simulering), ta rast, och klocka ut (både vanlig tid och OB-tid).
 
-2. Admin-vyn (Admin Dashboard)
-Här loggar chefen in för att få överblick inför löning.
+Frånvarohantering: Knappar för att snabbt anmäla Sjukdom eller Semester.
 
-Översiktsvy: En lista/tabell över alla anställda.
+Schemahantering: Arbetaren kan se sina inlagda pass och själv lägga till nya pass.
 
-Löneberäkning: Kolumner som visar: Namn, Arbetade timmar (denna månad), Timlön, och Total lön att utbetala.
+Lönespecifikation (Kvitto): Ett digitalt kvitto som visar uträknad bruttolön baserat på vanliga timmar och OB-timmar. Inkluderar en konfetti-effekt (Gamification) vid öppning!
 
-Aktivitetslogg: Vem som är inloggad just nu och exakta tider de stämplat in och ut.
+Realtidsstatistik: Visar direkt hur många timmar som jobbats och vad timlönen ligger på.
 
-Vår tekniska plan (Steg-för-steg)
-Eftersom vi vill ha ut detta snabbt idag, föreslår jag att vi bygger allt i en och samma HTML-fil (Single Page-känsla), men vi använder JavaScript och CSS för att "dölja" och "visa" antingen Arbetar-vyn eller Admin-vyn beroende på vad man klickar på i menyn. Det gör det superenkelt att visa för kunden utan att ladda om sidan.
+👔 För Administratören (Admin Dashboard)
+Grafisk Översikt: Ett interaktivt stapeldiagram (Chart.js) som visualiserar lönekostnader fördelat på vanliga timmar och OB-tillägg.
 
-Steg 1: Sätta upp HTML-skelettet och en enkel navigeringsmeny (Byt mellan "Arbetare" och "Admin").
+Personalhantering: Lägg till ny personal, redigera befintlig (namn, lön) och radera.
 
-Steg 2: Bygga UI:t för Arbetar-vyn med stämpelklockan och schemat.
+Schemaläggning (Modal): Klicka på en anställd för att se och redigera just den personens schema och pass.
 
-Steg 3: Bygga UI:t för Admin-vyn med lönetabellen.
+Aktivitetslogg: Realtidslogg som visar exakt när personal stämplar in/ut, tar rast eller blir sjuka (inkluderar platstaggar).
 
-Steg 4: Lägga till lite CSS för att göra det snyggt, modernt och mobilanpassat (så det ser professionellt ut för kunden).
+Sök & Filtrera: Snabbt sökfält för att filtrera lönetabellen.
 
-Steg 5: Koppla på JavaScript så att knapparna "fungerar" visuellt med vår låtsasdata.
+CSV Export: Möjlighet att exportera hela löneöversikten till en CSV-fil som kan öppnas i Excel för vidare bokföring.
+
+🌐 System & UX (Gemensamt)
+Dark Mode / Light Mode: Fullt stöd för mörkt tema som sparas i användarens inställningar.
+
+Offline-stöd (Indikator): Systemet känner av om användaren förlorar internetuppkopplingen och informerar om att systemet nu sparar datan lokalt tills nätverket är tillbaka.
+
+Toast-notiser: Snygga animerade notiser istället för tråkiga webbläsar-popups.
+
+Levande klocka: En realtidsklocka som följer systemets tid.
+
+🛠️ Teknisk Stack
+Frontend: Ren HTML5, CSS3 (med CSS-variabler för theming) och Vanilla JavaScript (ES6+).
+
+Databas: Inbyggd localStorage i webbläsaren.
+
+Externa Bibliotek (laddas via CDN):
+
+Chart.js - För kostnadsdiagrammet i Admin-vyn.
+
+Canvas Confetti - För gamification-effekten på lönekvittot.
+
+🚀 Hur man kör projektet (Kom igång)
+Eftersom hela projektet ligger i en enda fil behövs ingen byggprocess, Node.js eller webbserver.
+
+Ladda ner eller skapa filen index.html.
+
+Dubbelklicka på filen för att öppna den i valfri modern webbläsare (Chrome, Safari, Edge, Firefox).
+
+För mobil-demo: Skicka HTML-filen (eller en länk om du lägger upp den på t.ex. GitHub Pages/Vercel) till din telefon, öppna i webbläsaren och välj "Dela -> Lägg till på hemskärmen".
+
+🎭 Guide för Demopresentation
+När du demonstrerar systemet för kund, följ detta flöde för bäst effekt:
+
+Inloggning: Möt kunden med startskärmen. Berätta att systemet har säker inloggning. PIN-koden för demon är: 1234. Skriv in detta och välj roll.
+
+Arbetarvyn (Klocka in): Visa den responsiva designen. Klicka på "Klocka In (GPS)". Notera webbläsarens platsförfrågan och den gröna Toast-notisen.
+
+Konfetti: Klicka på "Visa Lönespecifikation" och låt kunden överraskas av konfettiregnet och det tydliga kvittot.
+
+Offline-läge: Stäng av din dators WiFi/Nätverk manuellt. Peka på statusindikatorn högst upp som byter från 🟢 Online till 🔴 Offline (Lokalt). Förklara att arbetare i miljöer utan täckning fortfarande kan använda systemet. Sätt på WiFi igen och visa hur den slår tillbaka.
+
+Adminvyn: Logga ut och logga in som Admin (1234).
+
+Hantera personal: Klicka på namnet på en av de anställda (t.ex. "Sara Andersson") i listan för att öppna redigeringsläget och ändra hennes pass.
+
+Exportera Data: Avsluta med att klicka på "Ladda ner CSV" för att visa att datan är redo för ekonomiavdelningen.
+
+🧹 Återställa Data
+Om du har lagt in massa test-data inför en presentation och vill "städa" systemet:
+
+Logga in.
+
+Skriv in följande i webbläsarens utvecklarkonsol (F12 -> Console) och tryck Enter:
+localStorage.removeItem('mvp_pro_employees'); localStorage.removeItem('mvp_pro_logs'); location.reload();
+
+(Alternativt kan du bygga in en dold "Rensa"-knapp i koden, men konsolen är säkrast för att undvika att klicka fel under en live-demo).
