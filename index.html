@@ -5,74 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Löneverktyg MVP</title>
     <style>
-        /* Grundläggande design */
+        /* Moderniserad design */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f9;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: #f3f4f6;
             margin: 0;
             padding: 0;
+            color: #1f2937;
         }
 
-        /* Navigationsmeny */
+        /* Huvudmeny (Top bar) */
         nav {
-            background-color: #1a202c;
-            padding: 1rem;
+            background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 1rem 2rem;
             display: flex;
             gap: 1rem;
             justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
             nav button {
                 padding: 0.5rem 1.5rem;
                 cursor: pointer;
-                font-weight: bold;
+                font-weight: 600;
                 border: none;
-                border-radius: 4px;
-                background-color: #e2e8f0;
-                font-size: 1rem;
+                border-radius: 6px;
+                background-color: rgba(255, 255, 255, 0.2);
+                color: white;
+                transition: all 0.2s;
             }
 
                 nav button:hover {
-                    background-color: #cbd5e1;
+                    background-color: rgba(255, 255, 255, 0.3);
                 }
 
-        /* Huvudbehållare och Kort */
+        /* Dropdown för att byta användare */
+        select {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: white;
+            color: #1e3a8a;
+        }
+
+        /* Huvudbehållare */
         .container {
             padding: 2rem;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
         }
 
+        /* Snyggare kort */
         .card {
             background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            border: 1px solid #e5e7eb;
         }
 
-        /* Knappar för Stämpelklocka */
+            .card h3 {
+                margin-top: 0;
+                color: #111827;
+                border-bottom: 2px solid #f3f4f6;
+                padding-bottom: 0.5rem;
+            }
+
+        /* Knappar */
         .btn {
-            padding: 1rem 2rem;
-            font-size: 1.2rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
             font-weight: bold;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             color: white;
-            margin-right: 1rem;
+            transition: opacity 0.2s;
         }
+
+            .btn:hover {
+                opacity: 0.9;
+            }
 
         .btn-in {
             background-color: #10b981;
+            margin-right: 1rem;
         }
-        /* Grön */
+
         .btn-out {
             background-color: #ef4444;
         }
-        /* Röd */
 
-        /* Tabell för Admin-vyn */
+        .btn-primary {
+            background-color: #3b82f6;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        /* Formulär och Inputs */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+            .form-group label {
+                display: block;
+                font-size: 0.875rem;
+                margin-bottom: 0.25rem;
+                font-weight: 600;
+            }
+
+            .form-group input {
+                width: 100%;
+                padding: 0.75rem;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                box-sizing: border-box;
+                font-size: 1rem;
+            }
+
+        /* Tabell */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -80,19 +135,55 @@
         }
 
         th, td {
-            padding: 0.75rem;
+            padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #f3f4f6;
         }
 
         th {
-            background-color: #f8fafc;
-            color: #475569;
+            background-color: #f9fafb;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
         }
 
-        /* Hjälpklass för att dölja element */
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        /* Status-badge */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+            .badge.inloggad {
+                background-color: #d1fae5;
+                color: #065f46;
+            }
+
+            .badge.utloggad {
+                background-color: #fee2e2;
+                color: #991b1b;
+            }
+
         .hidden {
             display: none;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -101,103 +192,186 @@
     <nav>
         <button onclick="showView('worker-view')">👨‍🔧 Arbetarvy</button>
         <button onclick="showView('admin-view')">👔 Adminvy</button>
+        <select id="user-selector" onchange="switchUser(this.value)">
+        </select>
     </nav>
 
     <div class="container">
         <div id="worker-view">
-            <h2>Välkommen, Alex (Arbetare)</h2>
+            <h2 id="welcome-message">Välkommen</h2>
 
             <div class="card">
                 <h3>⏰ Stämpelklocka</h3>
-                <p>Din status just nu: <strong id="status" style="color: #ef4444;">Utloggad</strong></p>
+                <p>Din status just nu: <span id="worker-status-badge" class="badge utloggad">Utloggad</span></p>
+                <br>
                 <button class="btn btn-in" onclick="clockIn()">Klocka In</button>
                 <button class="btn btn-out" onclick="clockOut()">Klocka Ut</button>
             </div>
 
             <div class="card">
-                <h3>📅 Ditt Schema & Veckans timmar</h3>
-                <ul>
-                    <li><strong>Måndag:</strong> 08:00 - 17:00 (Klar: 8h)</li>
-                    <li><strong>Tisdag:</strong> 08:00 - 17:00 (Idag)</li>
-                    <li><strong>Onsdag:</strong> 08:00 - 17:00</li>
-                </ul>
-                <p><em>Totalt arbetade timmar denna vecka: <strong id="worker-hours">8</strong>h</em></p>
+                <h3>📅 Veckans översikt</h3>
+                <p>Du har jobbat <strong id="worker-hours" style="font-size: 1.5rem; color: #3b82f6;">0</strong> timmar den här månaden.</p>
             </div>
         </div>
 
         <div id="admin-view" class="hidden">
-            <h2>Admin Dashboard - Löneöversikt</h2>
-            <div class="card">
-                <h3>💰 Utbetalningar (Denna månad)</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Anställd</th>
-                            <th>Arbetade timmar</th>
-                            <th>Timlön</th>
-                            <th>Total lön</th>
-                        </tr>
-                    </thead>
-                    <tbody id="payroll-body">
-                    </tbody>
-                </table>
+            <h2>Admin Dashboard</h2>
+
+            <div class="admin-grid">
+                <div class="card">
+                    <h3>➕ Ny Anställd</h3>
+                    <div class="form-group">
+                        <label>Namn</label>
+                        <input type="text" id="new-name" placeholder="T.ex. Anna Svensson">
+                    </div>
+                    <div class="form-group">
+                        <label>Timlön (kr)</label>
+                        <input type="number" id="new-wage" placeholder="T.ex. 160">
+                    </div>
+                    <button class="btn btn-primary" onclick="addEmployee()">Lägg till person</button>
+                </div>
+
+                <div class="card">
+                    <h3>💰 Löneöversikt</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Anställd</th>
+                                <th>Status</th>
+                                <th>Timmar</th>
+                                <th>Timlön</th>
+                                <th>Att utbetala</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payroll-body">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. Låtsasdata för admin-vyn ---
-        const employees = [
-            { name: "Alex (Du)", hours: 8, wage: 150 },
-            { name: "Sara Andersson", hours: 32, wage: 160 },
-            { name: "Johan Karlsson", hours: 40, wage: 145 },
-            { name: "Maria Nilsson", hours: 15, wage: 155 }
+        // Vår huvuddatabas (Mock data)
+        let employees = [
+            { id: 0, name: "Alex (Du)", hours: 8, wage: 150, status: "Utloggad" },
+            { id: 1, name: "Sara Andersson", hours: 32, wage: 160, status: "Inloggad" },
+            { id: 2, name: "Johan Karlsson", hours: 40, wage: 145, status: "Utloggad" }
         ];
 
-        // --- 2. Funktion för att byta vy ---
+        let currentUserIndex = 0; // Håller koll på vem som "tittar" på skärmen
+
+        // Körs direkt när sidan laddas
+        window.onload = function () {
+            updateDropdown();
+            loadWorkerView();
+        };
+
+        // --- BYT ANVÄNDARE LOGIK ---
+        function updateDropdown() {
+            const selector = document.getElementById('user-selector');
+            selector.innerHTML = '';
+            employees.forEach((emp, index) => {
+                selector.innerHTML += `<option value="${index}">Agerar som: ${emp.name}</option>`;
+            });
+            selector.value = currentUserIndex;
+        }
+
+        function switchUser(index) {
+            currentUserIndex = parseInt(index);
+            loadWorkerView(); // Uppdatera skärmen med den nya personens info
+        }
+
+        // --- ARBETAR-VYN LOGIK ---
+        function loadWorkerView() {
+            const user = employees[currentUserIndex];
+            document.getElementById('welcome-message').innerText = `Välkommen, ${user.name}`;
+            document.getElementById('worker-hours').innerText = user.hours;
+
+            const badge = document.getElementById('worker-status-badge');
+            if (user.status === 'Inloggad') {
+                badge.innerText = 'Inloggad';
+                badge.className = 'badge inloggad';
+            } else {
+                badge.innerText = 'Utloggad';
+                badge.className = 'badge utloggad';
+            }
+        }
+
+        function clockIn() {
+            employees[currentUserIndex].status = 'Inloggad';
+            loadWorkerView();
+            alert("Du är nu incheckad!");
+        }
+
+        function clockOut() {
+            let user = employees[currentUserIndex];
+            if (user.status === 'Inloggad') {
+                user.status = 'Utloggad';
+                user.hours += 8; // Låtsas att vi jobbade ett 8-timmars pass
+                loadWorkerView();
+                alert(`Du är utcheckad! 8 timmar har lagts till din profil.`);
+            }
+        }
+
+        // --- ADMIN-VYN LOGIK ---
         function showView(viewId) {
             document.getElementById('worker-view').classList.add('hidden');
             document.getElementById('admin-view').classList.add('hidden');
             document.getElementById(viewId).classList.remove('hidden');
 
-            // Om vi klickar på admin, ladda datan!
             if (viewId === 'admin-view') {
                 loadAdminData();
+            } else {
+                loadWorkerView();
             }
         }
 
-        // --- 3. Funktion för att rendera admintabellen ---
         function loadAdminData() {
             const tbody = document.getElementById('payroll-body');
-            tbody.innerHTML = ''; // Rensa gamla rader först
+            tbody.innerHTML = '';
 
             employees.forEach(employee => {
-                // Räkna ut lönen (Timmar * Timlön)
                 const totalSalary = employee.hours * employee.wage;
+                const statusClass = employee.status === 'Inloggad' ? 'badge inloggad' : 'badge utloggad';
 
-                // Skapa en HTML-rad för varje anställd
                 const row = `<tr>
-                        <td>${employee.name}</td>
+                        <td><strong>${employee.name}</strong></td>
+                        <td><span class="${statusClass}">${employee.status}</span></td>
                         <td>${employee.hours} h</td>
-                        <td>${employee.wage} kr/h</td>
+                        <td>${employee.wage} kr</td>
                         <td><strong>${totalSalary.toLocaleString('sv-SE')} kr</strong></td>
                     </tr>`;
-
-                tbody.innerHTML += row; // Lägg in raden i tabellen
+                tbody.innerHTML += row;
             });
         }
 
-        // --- 4. Funktioner för Arbetar-vyn ---
-        function clockIn() {
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = 'Inloggad (Jobbar)';
-            statusEl.style.color = '#10b981';
-        }
+        // --- LÄGG TILL ANSTÄLLD LOGIK ---
+        function addEmployee() {
+            const nameInput = document.getElementById('new-name');
+            const wageInput = document.getElementById('new-wage');
 
-        function clockOut() {
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = 'Utloggad';
-            statusEl.style.color = '#ef4444';
+            const name = nameInput.value;
+            const wage = parseInt(wageInput.value);
+
+            // Kolla så fälten inte är tomma
+            if (name !== "" && wage > 0) {
+                const newId = employees.length;
+                // Lägg in i vår "databas"
+                employees.push({ id: newId, name: name, hours: 0, wage: wage, status: "Utloggad" });
+
+                // Rensa fälten
+                nameInput.value = '';
+                wageInput.value = '';
+
+                // Uppdatera vyerna
+                loadAdminData();
+                updateDropdown();
+
+                alert(`${name} har lagts till i systemet!`);
+            } else {
+                alert("Vänligen fyll i både namn och en giltig timlön.");
+            }
         }
     </script>
 </body>
