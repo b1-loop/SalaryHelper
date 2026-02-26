@@ -2,185 +2,598 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Löneverktyg MVP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <title>Löneverktyg MVP Diamond</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
-        /* Moderniserad design */
-        body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background-color: #f3f4f6;
-            margin: 0;
-            padding: 0;
-            color: #1f2937;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #f8fafc;
+            --text-color: #0f172a;
+            --card-bg: white;
+            --card-border: #f1f5f9;
+            --nav-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --input-bg: white;
+            --input-border: #cbd5e1;
+            --text-muted: #64748b;
+            --table-hover: #f8fafc;
+            --stat-bg: #f8fafc;
+            --modal-overlay: rgba(15, 23, 42, 0.6);
         }
 
-        /* Huvudmeny (Top bar) */
+        body.dark-mode {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --nav-bg: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            --input-bg: #0f172a;
+            --input-border: #475569;
+            --text-muted: #94a3b8;
+            --table-hover: #0f172a;
+            --stat-bg: #0f172a;
+            --modal-overlay: rgba(0, 0, 0, 0.8);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: all 0.3s;
+        }
+
         nav {
-            background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+            background: var(--nav-bg);
             padding: 1rem 2rem;
             display: flex;
             gap: 1rem;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
         }
 
             nav button {
-                padding: 0.5rem 1.5rem;
+                padding: 0.6rem 1.2rem;
                 cursor: pointer;
                 font-weight: 600;
                 border: none;
-                border-radius: 6px;
-                background-color: rgba(255, 255, 255, 0.2);
+                border-radius: 8px;
+                background-color: rgba(255, 255, 255, 0.1);
                 color: white;
                 transition: all 0.2s;
             }
 
                 nav button:hover {
-                    background-color: rgba(255, 255, 255, 0.3);
+                    background-color: rgba(255, 255, 255, 0.2);
+                    transform: translateY(-1px);
                 }
 
-        /* Dropdown för att byta användare */
         select {
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            border: none;
-            font-weight: bold;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            font-weight: 600;
             cursor: pointer;
-            background-color: white;
-            color: #1e3a8a;
+            background-color: var(--input-bg);
+            color: var(--text-color);
         }
 
-        /* Huvudbehållare */
+        .network-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+            .network-badge.online {
+                background: rgba(16, 185, 129, 0.2);
+                color: #10b981;
+            }
+
+            .network-badge.offline {
+                background: rgba(239, 68, 68, 0.2);
+                color: #ef4444;
+            }
+
         .container {
             padding: 2rem;
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
-        /* Snyggare kort */
-        .card {
-            background: white;
-            padding: 2rem;
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--nav-bg);
+            color: white;
+            text-align: center;
+        }
+
+        .login-box {
+            background: rgba(255,255,255,0.1);
+            padding: 3rem;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 400px;
+        }
+
+            .login-box h1 {
+                margin-top: 0;
+                margin-bottom: 0.5rem;
+                font-size: 2.2rem;
+            }
+
+        .pin-input {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.2);
+            color: white;
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 0.5rem;
+            outline: none;
+        }
+
+        .login-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .login-btn.worker {
+                background: #3b82f6;
+                color: white;
+            }
+
+            .login-btn.admin {
+                background: #10b981;
+                color: white;
+            }
+
+            .login-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            }
+
+        .live-clock-container {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            background: var(--card-bg);
+            padding: 1rem;
             border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #3b82f6;
+            border: 1px solid var(--card-border);
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
             margin-bottom: 2rem;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--card-border);
         }
 
             .card h3 {
                 margin-top: 0;
-                color: #111827;
-                border-bottom: 2px solid #f3f4f6;
-                padding-bottom: 0.5rem;
+                border-bottom: 2px solid var(--card-border);
+                padding-bottom: 0.75rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
             }
 
-        /* Knappar */
         .btn {
             padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            font-weight: bold;
+            font-size: 0.95rem;
+            font-weight: 600;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             color: white;
-            transition: opacity 0.2s;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
             .btn:hover {
                 opacity: 0.9;
+                transform: translateY(-1px);
             }
 
         .btn-in {
             background-color: #10b981;
-            margin-right: 1rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-break {
+            background-color: #f97316;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
         }
 
         .btn-out {
+            background-color: #3b82f6;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-out-ob {
+            background-color: #8b5cf6;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-sick {
             background-color: #ef4444;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-leave {
+            background-color: #ec4899;
+            margin-bottom: 0.5rem;
         }
 
         .btn-primary {
             background-color: #3b82f6;
             width: 100%;
-            margin-top: 1rem;
+            justify-content: center;
         }
 
-        /* Formulär och Inputs */
+        .btn-secondary {
+            background-color: #64748b;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-export {
+            background-color: #10b981;
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: white;
+        }
+
+        .btn-edit {
+            background-color: #3b82f6;
+        }
+
+        .btn-delete {
+            background-color: #ef4444;
+        }
+
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
+            width: 100%;
         }
 
             .form-group label {
                 display: block;
-                font-size: 0.875rem;
-                margin-bottom: 0.25rem;
+                font-size: 0.85rem;
+                margin-bottom: 0.4rem;
                 font-weight: 600;
+                color: var(--text-muted);
             }
 
             .form-group input {
                 width: 100%;
                 padding: 0.75rem;
-                border: 1px solid #d1d5db;
-                border-radius: 6px;
+                border: 1px solid var(--input-border);
+                border-radius: 8px;
                 box-sizing: border-box;
-                font-size: 1rem;
+                background: var(--input-bg);
+                color: var(--text-color);
+                outline: none;
             }
 
-        /* Tabell */
+                .form-group input:focus {
+                    border-color: #3b82f6;
+                }
+
+        .search-bar {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2394a3b8" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 10px center;
+            padding-left: 35px;
+            box-sizing: border-box;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
         }
 
         th, td {
             padding: 1rem;
             text-align: left;
-            border-bottom: 1px solid #f3f4f6;
+            border-bottom: 1px solid var(--card-border);
         }
 
         th {
-            background-color: #f9fafb;
-            color: #6b7280;
-            font-weight: 600;
-            text-transform: uppercase;
+            color: var(--text-muted);
             font-size: 0.75rem;
+            text-transform: uppercase;
         }
 
         tr:hover {
-            background-color: #f9fafb;
+            background-color: var(--table-hover);
         }
 
-        /* Status-badge */
+        /* KLICKBARA NAMN I TABELLEN */
+        .clickable-name {
+            color: #3b82f6;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-color: transparent;
+            transition: text-decoration-color 0.2s;
+        }
+
+            .clickable-name:hover {
+                text-decoration-color: #3b82f6;
+            }
+
+        .schedule-list, .log-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .schedule-list li, .log-list li {
+                padding: 0.85rem 0;
+                border-bottom: 1px dashed var(--card-border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+        .log-time {
+            color: var(--text-muted);
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
         .badge {
-            padding: 0.25rem 0.75rem;
+            padding: 0.35rem 0.85rem;
             border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
         }
 
             .badge.inloggad {
-                background-color: #d1fae5;
-                color: #065f46;
+                background-color: rgba(16, 185, 129, 0.2);
+                color: #10b981;
             }
 
             .badge.utloggad {
-                background-color: #fee2e2;
-                color: #991b1b;
+                background-color: rgba(100, 116, 139, 0.2);
+                color: var(--text-muted);
             }
 
-        .hidden {
+            .badge.rast {
+                background-color: rgba(249, 115, 22, 0.2);
+                color: #ea580c;
+            }
+
+            .badge.sjuk {
+                background-color: rgba(239, 68, 68, 0.2);
+                color: #ef4444;
+            }
+
+            .badge.semester {
+                background-color: rgba(236, 72, 153, 0.2);
+                color: #ec4899;
+            }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .stat-box {
+            background: var(--stat-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+        }
+
+            .stat-box span {
+                display: block;
+                font-size: 0.8rem;
+                color: var(--text-muted);
+                font-weight: 600;
+                text-transform: uppercase;
+                margin-bottom: 0.25rem;
+            }
+
+            .stat-box strong {
+                font-size: 1.5rem;
+            }
+
+        .modal {
             display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--modal-overlay);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+            .modal.active {
+                display: flex;
+            }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            border: none;
+            background: transparent;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed var(--card-border);
+        }
+
+        .receipt-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-top: 2px solid var(--text-color);
+            margin-top: 1rem;
+        }
+
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            min-width: 250px;
+            background: white;
+            color: #0f172a;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border-left: 5px solid #3b82f6;
+            animation: slideIn 0.3s forwards, fadeOut 0.3s 2.7s forwards;
+        }
+
+            .toast.success {
+                border-color: #10b981;
+            }
+
+            .toast.error {
+                border-color: #ef4444;
+            }
+
+            .toast.warning {
+                border-color: #f97316;
+            }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         .admin-grid {
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            grid-template-columns: 350px 1fr;
             gap: 2rem;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .admin-grid {
                 grid-template-columns: 1fr;
             }
@@ -189,189 +602,339 @@
 </head>
 <body>
 
-    <nav>
-        <button onclick="showView('worker-view')">👨‍🔧 Arbetarvy</button>
-        <button onclick="showView('admin-view')">👔 Adminvy</button>
-        <select id="user-selector" onchange="switchUser(this.value)">
-        </select>
-    </nav>
+    <div id="toast-container"></div>
 
-    <div class="container">
-        <div id="worker-view">
-            <h2 id="welcome-message">Välkommen</h2>
-
-            <div class="card">
-                <h3>⏰ Stämpelklocka</h3>
-                <p>Din status just nu: <span id="worker-status-badge" class="badge utloggad">Utloggad</span></p>
-                <br>
-                <button class="btn btn-in" onclick="clockIn()">Klocka In</button>
-                <button class="btn btn-out" onclick="clockOut()">Klocka Ut</button>
-            </div>
-
-            <div class="card">
-                <h3>📅 Veckans översikt</h3>
-                <p>Du har jobbat <strong id="worker-hours" style="font-size: 1.5rem; color: #3b82f6;">0</strong> timmar den här månaden.</p>
-            </div>
+    <div id="login-screen">
+        <div class="login-box">
+            <h1>⏱️ TimeTrack Pro</h1>
+            <p style="margin-bottom: 2rem; color: #94a3b8;">Säker inloggning. Ange PIN: <strong>1234</strong></p>
+            <input type="password" id="login-pin" class="pin-input" placeholder="****" maxlength="4" autocomplete="off">
+            <button class="login-btn worker" onclick="doLogin('worker')">👨‍🔧 Logga in som Arbetare</button>
+            <button class="login-btn admin" onclick="doLogin('admin')">👔 Logga in som Admin</button>
         </div>
+    </div>
 
-        <div id="admin-view" class="hidden">
-            <h2>Admin Dashboard</h2>
+    <div id="app-content" class="hidden">
+        <nav>
+            <button id="nav-worker-btn" onclick="showView('worker-view')">👨‍🔧 Min Vy</button>
+            <button id="nav-admin-btn" onclick="showView('admin-view')">👔 Admin</button>
+            <select id="user-selector" onchange="switchUser(this.value)"></select>
+            <div style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
+                <div id="network-status" class="network-badge online">🟢 Online</div>
+                <button onclick="toggleDarkMode()" title="Byt tema">🌙 Tema</button>
+                <button onclick="logout()" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Logga ut</button>
+            </div>
+        </nav>
 
-            <div class="admin-grid">
-                <div class="card">
-                    <h3>➕ Ny Anställd</h3>
-                    <div class="form-group">
-                        <label>Namn</label>
-                        <input type="text" id="new-name" placeholder="T.ex. Anna Svensson">
+        <div class="container">
+            <div id="live-clock" class="live-clock-container">Laddar tid...</div>
+
+            <div id="worker-view">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <h2 id="welcome-message" style="margin: 0;">Välkommen</h2>
+                    <button class="btn btn-secondary" style="width: auto; margin:0;" onclick="openPayslipModal()">🧾 Visa Lönespecifikation</button>
+                </div>
+
+                <div class="card" style="margin-top: 1rem;">
+                    <h3>⏰ Stämpelklocka</h3>
+                    <p>Din status: <span id="worker-status-badge" class="badge utloggad">Utloggad</span></p>
+                    <div style="margin-top: 1.5rem; display:flex; flex-wrap: wrap;">
+                        <button class="btn btn-in" onclick="clockIn()">▶ Klocka In (GPS)</button>
+                        <button class="btn btn-break" onclick="toggleBreak(true)">☕ Börja Rast</button>
+                        <button class="btn btn-break" onclick="toggleBreak(false)">▶ Avsluta Rast</button>
+                        <button class="btn btn-out" onclick="clockOut('normal')">⏹ Ut (Vanlig)</button>
+                        <button class="btn btn-out-ob" onclick="clockOut('ob')">🌙 Ut (OB)</button>
+                        <button class="btn btn-sick" onclick="setStatus('Sjuk')">🤒 Sjuk</button>
+                        <button class="btn btn-leave" onclick="setStatus('Semester')">🏖️ Ledighet</button>
                     </div>
-                    <div class="form-group">
-                        <label>Timlön (kr)</label>
-                        <input type="number" id="new-wage" placeholder="T.ex. 160">
+
+                    <div class="stats-grid">
+                        <div class="stat-box"><span>Vanliga Timmar</span><strong id="worker-hours">0h</strong></div>
+                        <div class="stat-box"><span>OB-Timmar</span><strong id="worker-ob-hours" style="color: #8b5cf6;">0h</strong></div>
+                        <div class="stat-box"><span>Timlön</span><strong id="worker-wage">0 kr</strong></div>
                     </div>
-                    <button class="btn btn-primary" onclick="addEmployee()">Lägg till person</button>
                 </div>
 
                 <div class="card">
-                    <h3>💰 Löneöversikt</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Anställd</th>
-                                <th>Status</th>
-                                <th>Timmar</th>
-                                <th>Timlön</th>
-                                <th>Att utbetala</th>
-                            </tr>
-                        </thead>
-                        <tbody id="payroll-body">
-                        </tbody>
-                    </table>
+                    <h3>📅 Mitt Schema</h3>
+                    <ul id="schedule-list" class="schedule-list"></ul>
+                    <h4 style="margin-top: 2rem;">Lägg till nytt pass</h4>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <div class="form-group" style="margin-bottom:0;"><input type="text" id="new-shift-day" placeholder="Dag"></div>
+                        <div class="form-group" style="margin-bottom:0;"><input type="text" id="new-shift-time" placeholder="Tid"></div>
+                        <button class="btn btn-secondary" style="width:auto; margin-top:0;" onclick="addShift()">Lägg till</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="admin-view" class="hidden">
+                <h2>Admin Dashboard</h2>
+
+                <div class="card">
+                    <h3>📊 Kostnadsfördelning</h3>
+                    <div style="position: relative; height:250px; width:100%;">
+                        <canvas id="salaryChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="admin-grid">
+                    <div>
+                        <div class="card">
+                            <h3>➕ Ny Anställd</h3>
+                            <div class="form-group"><label>Namn</label><input type="text" id="new-name" placeholder="T.ex. Anna Svensson"></div>
+                            <div class="form-group"><label>Timlön (kr)</label><input type="number" id="new-wage" placeholder="T.ex. 160"></div>
+                            <button class="btn btn-primary" onclick="addEmployee()">Lägg till person</button>
+                        </div>
+                        <div class="card">
+                            <h3>⏱️ Aktivitetslogg</h3>
+                            <ul id="activity-log-list" class="log-list" style="padding:0; margin:0; list-style:none;"></ul>
+                        </div>
+                    </div>
+
+                    <div class="card" style="overflow-x: auto;">
+                        <h3 style="align-items: center;">💰 Löneöversikt <button class="btn btn-export" onclick="exportCSV()">📥 Exportera CSV</button></h3>
+                        <input type="text" id="search-employee" class="search-bar" placeholder="Sök efter anställd..." onkeyup="filterTable()">
+                        <table style="min-width: 550px;">
+                            <thead>
+                                <tr><th>Anställd</th><th>Status</th><th>Timmar</th><th>OB</th><th>Total lön</th><th>Åtgärd</th></tr>
+                            </thead>
+                            <tbody id="payroll-body"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <div id="payslip-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closePayslipModal()">✖</button>
+            <h2 style="margin-top:0; border-bottom: 2px solid var(--card-border); padding-bottom: 1rem;">Lönespecifikation</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Period: <span id="payslip-date"></span></p>
+            <p style="font-weight: bold; font-size: 1.1rem; margin-bottom: 2rem;">Namn: <span id="payslip-name" style="color: #3b82f6;"></span></p>
+            <div class="receipt-row"><span>Vanlig Arbetstid (<span id="payslip-reg-hours">0</span>h á <span id="payslip-reg-wage">0</span> kr)</span><span id="payslip-reg-total">0 kr</span></div>
+            <div class="receipt-row"><span>OB-Tillägg / Helg (<span id="payslip-ob-hours">0</span>h á <span id="payslip-ob-wage">0</span> kr)</span><span id="payslip-ob-total" style="color: #8b5cf6;">0 kr</span></div>
+            <div class="receipt-total"><span>Bruttolön (Innan skatt)</span><span id="payslip-grand-total">0 kr</span></div>
+            <button class="btn btn-primary" style="margin-top: 2rem;" onclick="closePayslipModal()">Stäng Kvitto</button>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeEditModal()">✖</button>
+
+            <h2 id="edit-modal-title" style="margin-top:0; color: #3b82f6;">Profil & Pass</h2>
+
+            <input type="hidden" id="edit-emp-index">
+
+            <div style="display: flex; gap: 1rem;">
+                <div class="form-group"><label>Namn</label><input type="text" id="edit-name"></div>
+                <div class="form-group"><label>Timlön (kr)</label><input type="number" id="edit-wage"></div>
+            </div>
+            <button class="btn btn-primary" onclick="saveEmployeeEdit()">Spara Grunduppgifter</button>
+
+            <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--card-border);">
+
+            <h3 style="margin-bottom: 1rem;">📅 Planerade Pass / Schema</h3>
+            <ul id="modal-schedule-list" class="schedule-list" style="margin-bottom: 1.5rem;"></ul>
+
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display:block; margin-bottom:0.4rem;">Lägg till pass för denna person</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="text" id="modal-shift-day" placeholder="Dag (t.ex. Fredag)" class="form-group input" style="margin-bottom:0;">
+                <input type="text" id="modal-shift-time" placeholder="Tid (t.ex. 08-16)" class="form-group input" style="margin-bottom:0;">
+                <button class="btn btn-secondary" style="margin-top:0; width:auto;" onclick="addShiftFromModal()">Lägg till</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Vår huvuddatabas (Mock data)
-        let employees = [
-            { id: 0, name: "Alex (Du)", hours: 8, wage: 150, status: "Utloggad" },
-            { id: 1, name: "Sara Andersson", hours: 32, wage: 160, status: "Inloggad" },
-            { id: 2, name: "Johan Karlsson", hours: 40, wage: 145, status: "Utloggad" }
+        function showToast(message, type = '') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerText = message;
+            container.appendChild(toast); setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const clockEl = document.getElementById('live-clock'); if (clockEl) clockEl.innerText = "Systemtid: " + now.toLocaleDateString('sv-SE', opts);
+            const payslipDateEl = document.getElementById('payslip-date'); if (payslipDateEl) payslipDateEl.innerText = now.toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' });
+        }
+        setInterval(updateClock, 1000);
+
+        function updateNetworkStatus(isOnline) {
+            const el = document.getElementById('network-status');
+            if (isOnline) { el.className = 'network-badge online'; el.innerText = '🟢 Online'; showToast('Online. Data synkad!', 'success'); }
+            else { el.className = 'network-badge offline'; el.innerText = '🔴 Offline (Lokalt)'; showToast('Offline. Sparar lokalt.', 'warning'); }
+        }
+        window.addEventListener('online', () => updateNetworkStatus(true)); window.addEventListener('offline', () => updateNetworkStatus(false));
+        if (!navigator.onLine) document.getElementById('network-status').className = 'network-badge offline';
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('mvp_theme', isDark ? 'dark' : 'light');
+            if (window.myChart) { Chart.defaults.color = isDark ? '#94a3b8' : '#64748b'; window.myChart.update(); }
+        }
+        if (localStorage.getItem('mvp_theme') === 'dark') document.body.classList.add('dark-mode');
+
+        const defaultEmployees = [
+            { name: "Alex (Du)", hours: 16, obHours: 0, wage: 150, status: "Utloggad", schedule: [{ day: "Måndag", time: "08:00 - 16:00" }] },
+            { name: "Sara Andersson", hours: 32, obHours: 8, wage: 160, status: "Inloggad", schedule: [] },
+            { name: "Pelle Sjuk", hours: 0, obHours: 0, wage: 140, status: "Sjuk", schedule: [] }
         ];
+        let employees = JSON.parse(localStorage.getItem('mvp_pro_employees')) || defaultEmployees;
+        let logs = JSON.parse(localStorage.getItem('mvp_pro_logs')) || [];
+        let currentUserIndex = 0; let currentRole = 'worker';
 
-        let currentUserIndex = 0; // Håller koll på vem som "tittar" på skärmen
+        function saveData() { localStorage.setItem('mvp_pro_employees', JSON.stringify(employees)); localStorage.setItem('mvp_pro_logs', JSON.stringify(logs)); }
+        window.onload = function () { updateClock(); updateDropdown(); };
 
-        // Körs direkt när sidan laddas
-        window.onload = function () {
+        function doLogin(role) {
+            const pinInput = document.getElementById('login-pin').value;
+            if (pinInput !== "1234") { showToast("Fel PIN-kod. Prova '1234'", "error"); document.getElementById('login-pin').value = ''; return; }
+            currentRole = role; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-content').classList.remove('hidden');
             updateDropdown();
-            loadWorkerView();
-        };
+            if (role === 'admin') { document.getElementById('nav-admin-btn').classList.remove('hidden'); document.getElementById('user-selector').classList.add('hidden'); showView('admin-view'); showToast("Inloggad som Administratör", "success"); }
+            else { document.getElementById('nav-admin-btn').classList.add('hidden'); document.getElementById('user-selector').classList.remove('hidden'); showView('worker-view'); showToast("Inloggad som Arbetare", "success"); }
+        }
+        function logout() { document.getElementById('app-content').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); document.getElementById('login-pin').value = ''; showToast("Utloggad."); }
 
-        // --- BYT ANVÄNDARE LOGIK ---
         function updateDropdown() {
-            const selector = document.getElementById('user-selector');
-            selector.innerHTML = '';
-            employees.forEach((emp, index) => {
-                selector.innerHTML += `<option value="${index}">Agerar som: ${emp.name}</option>`;
-            });
-            selector.value = currentUserIndex;
+            const selector = document.getElementById('user-selector'); selector.innerHTML = '';
+            employees.forEach((emp, i) => selector.innerHTML += `<option value="${i}">Profil: ${emp.name}</option>`); selector.value = currentUserIndex;
         }
+        function switchUser(index) { currentUserIndex = parseInt(index); loadWorkerView(); showToast(`Växlade till ${employees[currentUserIndex].name}`); }
+        function showView(viewId) { document.getElementById('worker-view').classList.add('hidden'); document.getElementById('admin-view').classList.add('hidden'); document.getElementById(viewId).classList.remove('hidden'); if (viewId === 'admin-view') loadAdminData(); else loadWorkerView(); }
 
-        function switchUser(index) {
-            currentUserIndex = parseInt(index);
-            loadWorkerView(); // Uppdatera skärmen med den nya personens info
-        }
-
-        // --- ARBETAR-VYN LOGIK ---
         function loadWorkerView() {
-            const user = employees[currentUserIndex];
+            if (employees.length === 0) return; const user = employees[currentUserIndex];
             document.getElementById('welcome-message').innerText = `Välkommen, ${user.name}`;
-            document.getElementById('worker-hours').innerText = user.hours;
-
-            const badge = document.getElementById('worker-status-badge');
-            if (user.status === 'Inloggad') {
-                badge.innerText = 'Inloggad';
-                badge.className = 'badge inloggad';
-            } else {
-                badge.innerText = 'Utloggad';
-                badge.className = 'badge utloggad';
-            }
+            document.getElementById('worker-hours').innerText = user.hours + "h"; document.getElementById('worker-ob-hours').innerText = (user.obHours || 0) + "h"; document.getElementById('worker-wage').innerText = user.wage + " kr/h";
+            const badge = document.getElementById('worker-status-badge'); badge.innerText = user.status; badge.className = `badge ${user.status.toLowerCase()}`;
+            const scheduleUl = document.getElementById('schedule-list'); scheduleUl.innerHTML = '';
+            user.schedule.forEach((shift, i) => scheduleUl.innerHTML += `<li><div><strong>${shift.day}</strong> <span style="margin-left:10px; color:var(--text-muted);">${shift.time}</span></div><button class="btn-sm btn-delete" onclick="deleteShiftWorker(${i})">Ta bort</button></li>`);
         }
+
+        function addLog(action) { logs.unshift({ name: employees[currentUserIndex].name, action: action, time: new Date().toLocaleTimeString('sv-SE') }); if (logs.length > 8) logs.pop(); saveData(); }
 
         function clockIn() {
-            employees[currentUserIndex].status = 'Inloggad';
-            loadWorkerView();
-            alert("Du är nu incheckad!");
-        }
-
-        function clockOut() {
             let user = employees[currentUserIndex];
-            if (user.status === 'Inloggad') {
+            if (user.status !== 'Inloggad') {
+                user.status = 'Inloggad'; showToast("Hämtar GPS-position...", "success"); loadWorkerView();
+                if ("geolocation" in navigator) { navigator.geolocation.getCurrentPosition((pos) => { addLog(`Stämplade in 📍 (Lat: ${pos.coords.latitude.toFixed(2)}, Lon: ${pos.coords.longitude.toFixed(2)})`); saveData(); }, (err) => { addLog("Stämplade in 📍 (Kontoret)"); saveData(); }, { timeout: 3000 }); }
+                else { addLog("Stämplade in 📍"); saveData(); }
+            } else { showToast("Redan incheckad!", "warning"); }
+        }
+
+        function toggleBreak(isStarting) {
+            let user = employees[currentUserIndex];
+            if (isStarting && user.status === 'Inloggad') { user.status = 'Rast'; addLog("Började rast ☕"); saveData(); loadWorkerView(); showToast("Du är nu på rast.", "success"); }
+            else if (!isStarting && user.status === 'Rast') { user.status = 'Inloggad'; addLog("Avslutade rast ▶"); saveData(); loadWorkerView(); showToast("Välkommen tillbaka!", "success"); }
+            else { showToast(isStarting ? "Kräver incheckning." : "Du är inte på rast.", "error"); }
+        }
+
+        function clockOut(type) {
+            let user = employees[currentUserIndex];
+            if (user.status === 'Inloggad' || user.status === 'Rast') {
                 user.status = 'Utloggad';
-                user.hours += 8; // Låtsas att vi jobbade ett 8-timmars pass
-                loadWorkerView();
-                alert(`Du är utcheckad! 8 timmar har lagts till din profil.`);
-            }
+                if (type === 'ob') { user.obHours = (user.obHours || 0) + 8; showToast("Utcheckad! (OB)"); } else { user.hours += 8; showToast("Utcheckad! 8h."); }
+                addLog("Stämplade ut ⏹"); saveData(); loadWorkerView();
+            } else { showToast("Redan utcheckad.", "error"); }
         }
 
-        // --- ADMIN-VYN LOGIK ---
-        function showView(viewId) {
-            document.getElementById('worker-view').classList.add('hidden');
-            document.getElementById('admin-view').classList.add('hidden');
-            document.getElementById(viewId).classList.remove('hidden');
+        function setStatus(status) { employees[currentUserIndex].status = status; addLog(`Status: ${status}`); saveData(); loadWorkerView(); showToast(`Status: ${status}`); }
+        function addShift() { const day = document.getElementById('new-shift-day').value; const time = document.getElementById('new-shift-time').value; if (day && time) { employees[currentUserIndex].schedule.push({ day, time }); document.getElementById('new-shift-day').value = ''; document.getElementById('new-shift-time').value = ''; saveData(); loadWorkerView(); showToast("Pass tillagt!"); } }
+        function deleteShiftWorker(i) { employees[currentUserIndex].schedule.splice(i, 1); saveData(); loadWorkerView(); }
 
-            if (viewId === 'admin-view') {
-                loadAdminData();
-            } else {
-                loadWorkerView();
-            }
+        function openPayslipModal() {
+            const user = employees[currentUserIndex]; const obHours = user.obHours || 0; const obWage = user.wage * 1.5;
+            document.getElementById('payslip-name').innerText = user.name; document.getElementById('payslip-reg-hours').innerText = user.hours; document.getElementById('payslip-reg-wage').innerText = user.wage; document.getElementById('payslip-reg-total').innerText = (user.hours * user.wage).toLocaleString('sv-SE') + " kr"; document.getElementById('payslip-ob-hours').innerText = obHours; document.getElementById('payslip-ob-wage').innerText = obWage; document.getElementById('payslip-ob-total').innerText = (obHours * obWage).toLocaleString('sv-SE') + " kr";
+            document.getElementById('payslip-grand-total').innerText = ((user.hours * user.wage) + (obHours * obWage)).toLocaleString('sv-SE') + " kr";
+            document.getElementById('payslip-modal').classList.add('active');
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'] });
         }
+        function closePayslipModal() { document.getElementById('payslip-modal').classList.remove('active'); }
 
         function loadAdminData() {
-            const tbody = document.getElementById('payroll-body');
-            tbody.innerHTML = '';
+            const tbody = document.getElementById('payroll-body'); tbody.innerHTML = '';
+            let chartLabels = []; let chartRegularPay = []; let chartOBPay = [];
 
-            employees.forEach(employee => {
-                const totalSalary = employee.hours * employee.wage;
-                const statusClass = employee.status === 'Inloggad' ? 'badge inloggad' : 'badge utloggad';
+            employees.forEach((emp, index) => {
+                let ob = emp.obHours || 0; let regularPay = emp.hours * emp.wage; let obPay = ob * (emp.wage * 1.5); let totalSalary = regularPay + obPay;
+                chartLabels.push(emp.name.split(' ')[0]); chartRegularPay.push(regularPay); chartOBPay.push(obPay);
 
-                const row = `<tr>
-                        <td><strong>${employee.name}</strong></td>
-                        <td><span class="${statusClass}">${employee.status}</span></td>
-                        <td>${employee.hours} h</td>
-                        <td>${employee.wage} kr</td>
+                tbody.innerHTML += `<tr class="employee-row">
+                        <td class="emp-name" onclick="openEditModal(${index})">
+                            <strong class="clickable-name" title="Klicka för att se profil och pass">${emp.name}</strong><br>
+                            <small style="color:var(--text-muted)">${emp.wage} kr/h</small>
+                        </td>
+                        <td><span class="badge ${emp.status.toLowerCase()}">${emp.status}</span></td>
+                        <td>${emp.hours}h</td><td style="color: #8b5cf6; font-weight:bold;">${ob}h</td>
                         <td><strong>${totalSalary.toLocaleString('sv-SE')} kr</strong></td>
+                        <td>
+                            <div class="btn-action-group">
+                                <button class="btn-sm btn-edit" onclick="openEditModal(${index})">📅 Profil & Pass</button>
+                                <button class="btn-sm btn-delete" onclick="deleteEmployee(${index})">✖</button>
+                            </div>
+                        </td>
                     </tr>`;
-                tbody.innerHTML += row;
             });
+
+            const logList = document.getElementById('activity-log-list');
+            logList.innerHTML = logs.map(log => `<li><span><strong>${log.name}</strong>: ${log.action}</span><span class="log-time">${log.time}</span></li>`).join('');
+            updateChart(chartLabels, chartRegularPay, chartOBPay);
         }
 
-        // --- LÄGG TILL ANSTÄLLD LOGIK ---
-        function addEmployee() {
-            const nameInput = document.getElementById('new-name');
-            const wageInput = document.getElementById('new-wage');
-
-            const name = nameInput.value;
-            const wage = parseInt(wageInput.value);
-
-            // Kolla så fälten inte är tomma
-            if (name !== "" && wage > 0) {
-                const newId = employees.length;
-                // Lägg in i vår "databas"
-                employees.push({ id: newId, name: name, hours: 0, wage: wage, status: "Utloggad" });
-
-                // Rensa fälten
-                nameInput.value = '';
-                wageInput.value = '';
-
-                // Uppdatera vyerna
-                loadAdminData();
-                updateDropdown();
-
-                alert(`${name} har lagts till i systemet!`);
-            } else {
-                alert("Vänligen fyll i både namn och en giltig timlön.");
+        function filterTable() {
+            const filter = document.getElementById('search-employee').value.toLowerCase();
+            const rows = document.getElementsByClassName('employee-row');
+            for (let i = 0; i < rows.length; i++) {
+                const nameCol = rows[i].querySelector('.emp-name');
+                if (nameCol) rows[i].style.display = (nameCol.textContent || nameCol.innerText).toLowerCase().indexOf(filter) > -1 ? "" : "none";
             }
+        }
+
+        function addEmployee() {
+            const name = document.getElementById('new-name').value; const wage = parseInt(document.getElementById('new-wage').value);
+            if (name && wage) { employees.push({ name, hours: 0, obHours: 0, wage, status: "Utloggad", schedule: [] }); document.getElementById('new-name').value = ''; document.getElementById('new-wage').value = ''; saveData(); loadAdminData(); updateDropdown(); showToast("Person tillagd", "success"); }
+        }
+        function deleteEmployee(index) { if (confirm(`Radera ${employees[index].name}?`)) { employees.splice(index, 1); saveData(); loadAdminData(); updateDropdown(); showToast("Anställd raderad"); } }
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Namn;Status;Vanliga Timmar;OB-Timmar;Timlon;Total Lon (kr)\n";
+            employees.forEach(emp => { let ob = emp.obHours || 0; let tot = (emp.hours * emp.wage) + (ob * (emp.wage * 1.5)); csvContent += `${emp.name};${emp.status};${emp.hours};${ob};${emp.wage};${tot}\n`; });
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csvContent)); link.setAttribute("download", "Lonelista_Export.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("Nedladdad!", "success");
+        }
+        function updateChart(labels, regularData, obData) {
+            const ctx = document.getElementById('salaryChart').getContext('2d');
+            Chart.defaults.color = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b'; Chart.defaults.font.family = 'Inter';
+            if (window.myChart) window.myChart.destroy();
+            window.myChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Vanlig Lön (kr)', data: regularData, backgroundColor: '#3b82f6', borderRadius: 4 }, { label: 'OB-tillägg (kr)', data: obData, backgroundColor: '#8b5cf6', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, border: { display: false } } }, plugins: { legend: { position: 'top' } } } });
+        }
+
+        function openEditModal(index) {
+            const emp = employees[index];
+            document.getElementById('edit-emp-index').value = index;
+            document.getElementById('edit-modal-title').innerText = "Profil & Pass: " + emp.name;
+            document.getElementById('edit-name').value = emp.name;
+            document.getElementById('edit-wage').value = emp.wage;
+            renderModalSchedule(index);
+            document.getElementById('edit-modal').classList.add('active');
+        }
+        function closeEditModal() { document.getElementById('edit-modal').classList.remove('active'); }
+        function saveEmployeeEdit() {
+            const index = document.getElementById('edit-emp-index').value;
+            const newName = document.getElementById('edit-name').value; const newWage = parseInt(document.getElementById('edit-wage').value);
+            if (newName && newWage) { employees[index].name = newName; employees[index].wage = newWage; saveData(); loadAdminData(); updateDropdown(); showToast("Sparat!", "success"); closeEditModal(); }
+        }
+        function renderModalSchedule(empIndex) {
+            const scheduleList = document.getElementById('modal-schedule-list'); scheduleList.innerHTML = ''; const emp = employees[empIndex];
+            if (emp.schedule.length === 0) { scheduleList.innerHTML = '<li><em style="color:var(--text-muted)">Inget schema inlagt.</em></li>'; return; }
+            emp.schedule.forEach((shift, shiftIndex) => scheduleList.innerHTML += `<li><div><strong>${shift.day}</strong> <span style="margin-left:10px; color:var(--text-muted);">${shift.time}</span></div><button class="btn-sm btn-delete" onclick="deleteShiftFromModal(${empIndex}, ${shiftIndex})">✖</button></li>`);
+        }
+        function deleteShiftFromModal(empIndex, shiftIndex) { employees[empIndex].schedule.splice(shiftIndex, 1); saveData(); renderModalSchedule(empIndex); showToast("Pass borttaget."); }
+        function addShiftFromModal() {
+            const empIndex = document.getElementById('edit-emp-index').value; const day = document.getElementById('modal-shift-day').value; const time = document.getElementById('modal-shift-time').value;
+            if (day && time) { employees[empIndex].schedule.push({ day, time }); document.getElementById('modal-shift-day').value = ''; document.getElementById('modal-shift-time').value = ''; saveData(); renderModalSchedule(empIndex); showToast("Pass tillagt!"); }
         }
     </script>
 </body>
