@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Löneverktyg MVP</title>
+    <style>
+        /* Grundläggande design */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Navigationsmeny */
+        nav {
+            background-color: #1a202c;
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+            nav button {
+                padding: 0.5rem 1.5rem;
+                cursor: pointer;
+                font-weight: bold;
+                border: none;
+                border-radius: 4px;
+                background-color: #e2e8f0;
+                font-size: 1rem;
+            }
+
+                nav button:hover {
+                    background-color: #cbd5e1;
+                }
+
+        /* Huvudbehållare och Kort */
+        .container {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Knappar för Stämpelklocka */
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            margin-right: 1rem;
+        }
+
+        .btn-in {
+            background-color: #10b981;
+        }
+        /* Grön */
+        .btn-out {
+            background-color: #ef4444;
+        }
+        /* Röd */
+
+        /* Tabell för Admin-vyn */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #475569;
+        }
+
+        /* Hjälpklass för att dölja element */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button onclick="showView('worker-view')">👨‍🔧 Arbetarvy</button>
+        <button onclick="showView('admin-view')">👔 Adminvy</button>
+    </nav>
+
+    <div class="container">
+        <div id="worker-view">
+            <h2>Välkommen, Alex (Arbetare)</h2>
+
+            <div class="card">
+                <h3>⏰ Stämpelklocka</h3>
+                <p>Din status just nu: <strong id="status" style="color: #ef4444;">Utloggad</strong></p>
+                <button class="btn btn-in" onclick="clockIn()">Klocka In</button>
+                <button class="btn btn-out" onclick="clockOut()">Klocka Ut</button>
+            </div>
+
+            <div class="card">
+                <h3>📅 Ditt Schema & Veckans timmar</h3>
+                <ul>
+                    <li><strong>Måndag:</strong> 08:00 - 17:00 (Klar: 8h)</li>
+                    <li><strong>Tisdag:</strong> 08:00 - 17:00 (Idag)</li>
+                    <li><strong>Onsdag:</strong> 08:00 - 17:00</li>
+                </ul>
+                <p><em>Totalt arbetade timmar denna vecka: <strong id="worker-hours">8</strong>h</em></p>
+            </div>
+        </div>
+
+        <div id="admin-view" class="hidden">
+            <h2>Admin Dashboard - Löneöversikt</h2>
+            <div class="card">
+                <h3>💰 Utbetalningar (Denna månad)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Anställd</th>
+                            <th>Arbetade timmar</th>
+                            <th>Timlön</th>
+                            <th>Total lön</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payroll-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Låtsasdata för admin-vyn ---
+        const employees = [
+            { name: "Alex (Du)", hours: 8, wage: 150 },
+            { name: "Sara Andersson", hours: 32, wage: 160 },
+            { name: "Johan Karlsson", hours: 40, wage: 145 },
+            { name: "Maria Nilsson", hours: 15, wage: 155 }
+        ];
+
+        // --- 2. Funktion för att byta vy ---
+        function showView(viewId) {
+            document.getElementById('worker-view').classList.add('hidden');
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById(viewId).classList.remove('hidden');
+
+            // Om vi klickar på admin, ladda datan!
+            if (viewId === 'admin-view') {
+                loadAdminData();
+            }
+        }
+
+        // --- 3. Funktion för att rendera admintabellen ---
+        function loadAdminData() {
+            const tbody = document.getElementById('payroll-body');
+            tbody.innerHTML = ''; // Rensa gamla rader först
+
+            employees.forEach(employee => {
+                // Räkna ut lönen (Timmar * Timlön)
+                const totalSalary = employee.hours * employee.wage;
+
+                // Skapa en HTML-rad för varje anställd
+                const row = `<tr>
+                        <td>${employee.name}</td>
+                        <td>${employee.hours} h</td>
+                        <td>${employee.wage} kr/h</td>
+                        <td><strong>${totalSalary.toLocaleString('sv-SE')} kr</strong></td>
+                    </tr>`;
+
+                tbody.innerHTML += row; // Lägg in raden i tabellen
+            });
+        }
+
+        // --- 4. Funktioner för Arbetar-vyn ---
+        function clockIn() {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = 'Inloggad (Jobbar)';
+            statusEl.style.color = '#10b981';
+        }
+
+        function clockOut() {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = 'Utloggad';
+            statusEl.style.color = '#ef4444';
+        }
+    </script>
+</body>
+</html>
