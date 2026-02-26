@@ -1,3 +1,5 @@
+live-demo: https://b1-loop.github.io/L-nekontor/
+
 ⏱️ TimeTrack Pro - MVP (Diamond Edition) 💎
 Ett komplett, webbaserat löne- och stämplingsverktyg byggt som en Single Page Application (SPA) i en enda HTML-fil. Projektet är designat för att fungera som en avancerad, klickbar prototyp (MVP) för kundpresentationer.
 
