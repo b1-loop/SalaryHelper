@@ -1,89 +1,134 @@
-live-demo: https://b1-loop.github.io/SalaryHelper/
+# ⏱️ TimeTrack Pro — Diamond Edition 💎
 
-⏱️ TimeTrack Pro - MVP (Diamond Edition) 💎
-Ett komplett, webbaserat löne- och stämplingsverktyg byggt som en Single Page Application (SPA) i en enda HTML-fil. Projektet är designat för att fungera som en avancerad, klickbar prototyp (MVP) för kundpresentationer.
+**Live demo:** https://b1-loop.github.io/SalaryHelper/
 
-Applikationen kräver ingen backend eller databas för att demonstreras, utan använder webbläsarens localStorage för att spara data (timmar, scheman och personal) mellan sessioner. Den är dessutom förberedd som en PWA (Progressive Web App), vilket innebär att den kan sparas på mobilens hemskärm och fungera som en riktig app.
+Ett komplett, webbaserat löne- och stämplingsverktyg byggt som en Single Page Application (SPA) i **en enda HTML-fil**. Projektet är designat som en avancerad, klickbar prototyp (MVP) för kundpresentationer.
 
-✨ Huvudfunktioner
-Applikationen är uppdelad i två huvudvyer med rollbaserad åtkomst (PIN-skyddad demoinloggning):
+Kräver ingen backend eller databas — allt sparas i webbläsarens `localStorage` och fungerar helt offline. Förberedd som en PWA (Progressive Web App) och kan sparas på mobilens hemskärm.
 
-👨‍🔧 För Arbetaren (Min Vy)
-Avancerad Stämpelklocka: Klocka in (med GPS-spårning/simulering), ta rast, och klocka ut (både vanlig tid och OB-tid).
+---
 
-Frånvarohantering: Knappar för att snabbt anmäla Sjukdom eller Semester.
+## 🔑 Demo-inloggning
 
-Schemahantering: Arbetaren kan se sina inlagda pass och själv lägga till nya pass.
+| Roll | PIN |
+|------|-----|
+| Admin | `9999` |
+| Alex (Du) | `1234` |
+| Sara Andersson | `5678` |
 
-Lönespecifikation (Kvitto): Ett digitalt kvitto som visar uträknad bruttolön baserat på vanliga timmar och OB-timmar. Inkluderar en konfetti-effekt (Gamification) vid öppning!
+---
 
-Realtidsstatistik: Visar direkt hur många timmar som jobbats och vad timlönen ligger på.
+## ✨ Funktioner
 
-👔 För Administratören (Admin Dashboard)
-Grafisk Översikt: Ett interaktivt stapeldiagram (Chart.js) som visualiserar lönekostnader fördelat på vanliga timmar och OB-tillägg.
+### 👨‍🔧 Arbetarvyn
 
-Personalhantering: Lägg till ny personal, redigera befintlig (namn, lön) och radera.
+| Funktion | Beskrivning |
+|----------|-------------|
+| **Stämpelklocka** | Klocka in med GPS-tagg, starta/avsluta rast, stämpla ut |
+| **Automatisk OB-beräkning** | Systemet delar automatiskt upp sessionen i vanlig tid och OB-tid (vardagar före 07:00 / efter 18:00, samt helger) med 5-minutsupplösning — ingen manuell OB-knapp behövs |
+| **Övertidsberäkning** | Timmar utöver 8h per dag flaggas automatiskt som övertid och ger 1,5× lön |
+| **Rastlängd** | Rasttid (minuter) sparas per session och visas i historiken |
+| **Frånvarohantering** | Knappar för Sjukdom (räknar sjukdagar) och Semester (drar av semesterdagar) |
+| **Frånvarosaldo** | Semesterdagar kvar och sjukdagar visas direkt i stats-grid |
+| **Schemahantering** | Visa, lägg till och ta bort egna pass |
+| **Skiftpåminnelse** | Browser-notis + toast om ett pass börjar inom 30 min (uppdateras var 60:e sekund) |
+| **Lönespecifikation** | Bruttolön uppdelad på vanlig tid, OB och övertid. Progressiv skatteberäkning (kommunalskatt 31,49 % + statlig skatt 20 % på belopp över 46 000 kr/mån). Konfetti-animation vid öppning |
+| **Skriv ut / Spara PDF** | Knapp i lönespecifikationen som öppnar utskriftsdialogen — allt utom specen döljs |
 
-Schemaläggning (Modal): Klicka på en anställd för att se och redigera just den personens schema och pass.
+---
 
-Aktivitetslogg: Realtidslogg som visar exakt när personal stämplar in/ut, tar rast eller blir sjuka (inkluderar platstaggar).
+### 👔 Admin Dashboard
 
-Sök & Filtrera: Snabbt sökfält för att filtrera lönetabellen.
+| Funktion | Beskrivning |
+|----------|-------------|
+| **Kostnadsdiagram** | Interaktivt stapeldiagram (Chart.js) — vanlig lön vs OB-tillägg per anställd |
+| **Löneöversikt med perioder** | Filtrera lönetabellen på *Allt*, *Denna vecka* eller *Denna månad* |
+| **Sök anställda** | Fritextsök i lönetabellen |
+| **Personalhantering** | Lägg till, redigera (namn, PIN, timlön, semesterdagar) och radera anställda |
+| **Bekräftelsedialog** | Alla destruktiva åtgärder kräver bekräftelse via en anpassad modal — ingen `window.confirm()` |
+| **Schema vs. faktisk tid** | I redigeringsmodalen visas jobbad tid bredvid schemalagd tid: `08:00–16:00 \| Jobbade: 7,5h (−0,5h)` |
+| **Återkommande schema** | Lägg till ett pass för varje valbar veckodag under 4/8/12 veckor framåt med ett klick |
+| **Historikvy per anställd** | Knapp i lönetabellen öppnar en modal med dag-för-dag-historik: vanlig tid, OB, övertid, rast och bruttolön |
+| **Rensa historik** | Knapp i redigeringsmodalen rensar all arbetstidshistorik och nollställer sjukdagar (semesterdagar rörs ej) — kräver bekräftelse |
+| **Aktivitetslogg** | 100 senaste händelser, fritextsök i loggen, "Visa fler"-knapp (50 åt gången) |
+| **CSV-export** | Exportera hela löneöversikten till en Excel-kompatibel CSV |
+| **Företagsnamn** | Ange företagsnamn under ⚙️ Inställningar — visas i navigeringen och på lönespecen |
+| **Lönespecifikationshistorik** | Varje gång en lönespec öppnas sparas en snapshot automatiskt. Admin kan se alla sparade specifikationer under ⚙️ Inställningar |
+| **Säkerhetskopiering** | Ladda ner hela databasen (anställda, historik, loggar, lönespecar) som en JSON-fil, eller återställ från en tidigare backup |
 
-CSV Export: Möjlighet att exportera hela löneöversikten till en CSV-fil som kan öppnas i Excel för vidare bokföring.
+---
 
-🌐 System & UX (Gemensamt)
-Dark Mode / Light Mode: Fullt stöd för mörkt tema som sparas i användarens inställningar.
+### 🌐 System & UX
 
-Offline-stöd (Indikator): Systemet känner av om användaren förlorar internetuppkopplingen och informerar om att systemet nu sparar datan lokalt tills nätverket är tillbaka.
+| Funktion | Beskrivning |
+|----------|-------------|
+| **Dark Mode / Light Mode** | Fullt stöd för mörkt tema, sparas i `localStorage` |
+| **Korrekt utskrift i dark mode** | Lönespecen skrivs alltid ut med ljus bakgrund oavsett valt tema |
+| **PIN-knappsats** | Visuellt numeriskt tangentbord på inloggningsskärmen — auto-skickar vid 4 siffror |
+| **Enter-tangent** | Tryck Enter i PIN-fältet för att logga in |
+| **Fel PIN-animation** | Inputfältet skakar och visar "Fel PIN-kod" i rött vid felaktig inloggning |
+| **Inaktivitets-timeout** | Automatisk utloggning efter 15 minuters inaktivitet |
+| **Offline-indikator** | Visar 🟢 Online / 🔴 Offline i navigeringen i realtid |
+| **Toast-notiser** | Animerade notiser för all feedback — inga webbläsar-popups |
+| **Levande klocka** | Systemtid uppdateras varje sekund |
 
-Toast-notiser: Snygga animerade notiser istället för tråkiga webbläsar-popups.
+---
 
-Levande klocka: En realtidsklocka som följer systemets tid.
+## 🛠️ Teknisk stack
 
-🛠️ Teknisk Stack
-Frontend: Ren HTML5, CSS3 (med CSS-variabler för theming) och Vanilla JavaScript (ES6+).
+| Del | Teknik |
+|-----|--------|
+| **Frontend** | HTML5, CSS3 (CSS-variabler, `@keyframes`, `@media print`), Vanilla JS (ES6+) |
+| **Databas** | `localStorage` — ingen server krävs |
+| **Diagram** | [Chart.js](https://www.chartjs.org/) via CDN |
+| **Konfetti** | [canvas-confetti](https://github.com/catdad/canvas-confetti) via CDN |
+| **Arkitektur** | Single-file SPA — hela appen i `index.html` |
 
-Databas: Inbyggd localStorage i webbläsaren.
+---
 
-Externa Bibliotek (laddas via CDN):
+## 🚀 Kom igång
 
-Chart.js - För kostnadsdiagrammet i Admin-vyn.
+Ingen byggprocess eller Node.js behövs.
 
-Canvas Confetti - För gamification-effekten på lönekvittot.
+1. Öppna `index.html` direkt i en modern webbläsare (Chrome, Edge, Firefox, Safari).
+2. Logga in med en av PIN-koderna ovan.
 
-🚀 Hur man kör projektet (Kom igång)
-Eftersom hela projektet ligger i en enda fil behövs ingen byggprocess, Node.js eller webbserver.
+**Mobil-demo:** Ladda upp filen till GitHub Pages eller Vercel och öppna länken på telefonen. Välj *Dela → Lägg till på hemskärmen* för att installera som PWA.
 
-Ladda ner eller skapa filen index.html.
+---
 
-Dubbelklicka på filen för att öppna den i valfri modern webbläsare (Chrome, Safari, Edge, Firefox).
+## 🎭 Guide för demopresentation
 
-För mobil-demo: Skicka HTML-filen (eller en länk om du lägger upp den på t.ex. GitHub Pages/Vercel) till din telefon, öppna i webbläsaren och välj "Dela -> Lägg till på hemskärmen".
+1. **Inloggning** — Visa PIN-skärmen och knappsatsen. Ange `1234` för Alex.
+2. **Klocka in** — Klicka *Klocka In (GPS)*. Notera plats-taggen i aktivitetsloggen.
+3. **Rast** — Starta och avsluta en rast. Visa att rasttiden dras av från arbetstiden.
+4. **Klocka ut** — Klicka *Stämpla Ut*. Visa att OB och övertid beräknas automatiskt i toasten.
+5. **Lönespecifikation** — Klicka *Visa Lönespecifikation*. Visa konfettin, skatteuppdelningen och utskriftsknappen.
+6. **Frånvaro** — Klicka *Semester* och visa att semesterdagssaldot minskar direkt.
+7. **Admin-vy** — Logga ut och logga in som Admin (`9999`).
+8. **Löneperiod** — Byt filter till *Denna månad* och visa hur totalsiffrorna ändras.
+9. **Historikvy** — Klicka på *Historik*-knappen bredvid en anställd.
+10. **Schema** — Öppna *Redigera* för en anställd, lägg till ett återkommande pass (t.ex. varje måndag i 4 veckor).
+11. **Inställningar** — Klicka på ⚙️ Inställningar, sätt ett företagsnamn och visa att det dyker upp i navbaren och på lönespecen.
+12. **Backup** — Klicka *Ladda ner backup* och visa den nedladdade JSON-filen.
+13. **Offline** — Stäng av WiFi och visa att indikatorn byter till 🔴 Offline utan att appen slutar fungera.
 
-🎭 Guide för Demopresentation
-När du demonstrerar systemet för kund, följ detta flöde för bäst effekt:
+---
 
-Inloggning: Möt kunden med startskärmen. Berätta att systemet har säker inloggning. PIN-koden för demon är: 1234. Skriv in detta och välj roll.
+## 🧹 Återställa testdata
 
-Arbetarvyn (Klocka in): Visa den responsiva designen. Klicka på "Klocka In (GPS)". Notera webbläsarens platsförfrågan och den gröna Toast-notisen.
+Klistra in detta i webbläsarens konsol (F12 → Console) för att nollställa all data:
 
-Konfetti: Klicka på "Visa Lönespecifikation" och låt kunden överraskas av konfettiregnet och det tydliga kvittot.
+```js
+['timetrack_pro_v3', 'timetrack_logs_v3', 'tt_payslips', 'tt_company'].forEach(k => localStorage.removeItem(k));
+location.reload();
+```
 
-Offline-läge: Stäng av din dators WiFi/Nätverk manuellt. Peka på statusindikatorn högst upp som byter från 🟢 Online till 🔴 Offline (Lokalt). Förklara att arbetare i miljöer utan täckning fortfarande kan använda systemet. Sätt på WiFi igen och visa hur den slår tillbaka.
+---
 
-Adminvyn: Logga ut och logga in som Admin (1234).
+## 📁 Projektstruktur
 
-Hantera personal: Klicka på namnet på en av de anställda (t.ex. "Sara Andersson") i listan för att öppna redigeringsläget och ändra hennes pass.
-
-Exportera Data: Avsluta med att klicka på "Ladda ner CSV" för att visa att datan är redo för ekonomiavdelningen.
-
-🧹 Återställa Data
-Om du har lagt in massa test-data inför en presentation och vill "städa" systemet:
-
-Logga in.
-
-Skriv in följande i webbläsarens utvecklarkonsol (F12 -> Console) och tryck Enter:
-localStorage.removeItem('mvp_pro_employees'); localStorage.removeItem('mvp_pro_logs'); location.reload();
-
-(Alternativt kan du bygga in en dold "Rensa"-knapp i koden, men konsolen är säkrast för att undvika att klicka fel under en live-demo).
+```
+index.html   ← Hela applikationen (HTML + CSS + JS, ~1 700 rader)
+README.md    ← Denna fil
+```
