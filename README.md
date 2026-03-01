@@ -129,6 +129,18 @@ location.reload();
 ## 📁 Projektstruktur
 
 ```
-index.html   ← Hela applikationen (HTML + CSS + JS, ~1 700 rader)
-README.md    ← Denna fil
+index.html          ← HTML-markup + referenser till CSS och JS
+README.md           ← Denna fil
+css/
+  style.css         ← All CSS (variabler, animationer, dark mode, @media print)
+js/
+  data.js           ← Global state, konstanter, localStorage-nycklar, datamigration
+  utils.js          ← showToast, updateClock, aktivitetslogg, toggleDarkMode, nätverksstatus
+  calculations.js   ← isOBTime, calculateOBSplit, getTaxBreakdown, getElapsedMs, getFilteredHistory
+  worker.js         ← Arbetar-vy, clockIn/Out, toggleBreak, setStatus, schema, skiftpåminnelser
+  admin.js          ← Admin-dashboard, lönetabell, addEmployee, deleteEmployee, exportCSV, diagram
+  modals.js         ← Alla modaler: lönespec, redigera, bekräfta, inställningar, historik, backup
+  auth.js           ← PIN-login, inaktivitetstimeout (15 min), logout
 ```
+
+Skripten laddas i rätt ordning i `index.html` (data → utils → calculations → worker → admin → modals → auth) så att alla globala variabler och funktioner finns tillgängliga vid behov. Ingen byggprocess eller bundler krävs — öppna `index.html` direkt i webbläsaren.
