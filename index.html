@@ -209,6 +209,29 @@
             border-color: #ef4444 !important;
         }
 
+        /* PIN numpad */
+        .pin-numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin: 0.75rem 0 1rem;
+        }
+
+        .pin-numpad button {
+            padding: 0.9rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+            .pin-numpad button:hover  { background: rgba(255,255,255,0.22); }
+            .pin-numpad button:active { transform: scale(0.93); background: rgba(59,130,246,0.5); }
+
         /* Klockan */
         .live-clock-container {
             text-align: center;
@@ -466,7 +489,7 @@
             cursor: pointer;
         }
 
-        /* Print — show only payslip */
+        /* Print — show only payslip, always in light mode */
         @media print {
             body * { visibility: hidden; }
             #payslip-modal, #payslip-modal * { visibility: visible; }
@@ -474,11 +497,19 @@
                 position: fixed;
                 left: 0; top: 0;
                 width: 100%; height: auto;
-                background: white !important;
                 display: block !important;
                 backdrop-filter: none;
+                background: white !important;
             }
             #payslip-modal .modal-content {
+                /* Force light-mode variables regardless of body class */
+                --bg-color:    #f8fafc;
+                --text-color:  #0f172a;
+                --card-bg:     white;
+                --card-border: #e2e8f0;
+                --text-muted:  #64748b;
+                background:    white !important;
+                color:         #0f172a !important;
                 max-height: none;
                 overflow: visible;
                 box-shadow: none;
@@ -502,6 +533,20 @@
             <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 1rem;">Admin: 9999 | Alex: 1234 | Sara: 5678</p>
             <input type="password" id="login-pin" class="pin-input" placeholder="****" maxlength="4" autocomplete="off" oninput="clearPinError()">
             <p id="pin-error"></p>
+            <div class="pin-numpad">
+                <button onclick="pinInput('1')">1</button>
+                <button onclick="pinInput('2')">2</button>
+                <button onclick="pinInput('3')">3</button>
+                <button onclick="pinInput('4')">4</button>
+                <button onclick="pinInput('5')">5</button>
+                <button onclick="pinInput('6')">6</button>
+                <button onclick="pinInput('7')">7</button>
+                <button onclick="pinInput('8')">8</button>
+                <button onclick="pinInput('9')">9</button>
+                <button onclick="pinClear()" style="font-size:1rem;">⌫</button>
+                <button onclick="pinInput('0')">0</button>
+                <button onclick="doLogin()" style="background:rgba(59,130,246,0.4);">↵</button>
+            </div>
             <button class="login-btn" onclick="doLogin()">Logga in</button>
         </div>
     </div>
@@ -687,6 +732,29 @@
                 <div class="form-group" style="margin-bottom:0; flex: 1;"><input type="time" id="modal-shift-end" required></div>
                 <button class="btn btn-secondary" style="margin-top:0; width:auto;" onclick="addShiftFromModal()">Lägg till</button>
             </div>
+
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--card-border);">
+            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display:block; margin-bottom:0.75rem;">🔄 Återkommande pass</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                <select id="modal-recur-day" style="padding:0.6rem; border-radius:8px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color); flex:1; min-width:110px;">
+                    <option value="1">Måndag</option>
+                    <option value="2">Tisdag</option>
+                    <option value="3">Onsdag</option>
+                    <option value="4">Torsdag</option>
+                    <option value="5">Fredag</option>
+                    <option value="6">Lördag</option>
+                    <option value="0">Söndag</option>
+                </select>
+                <div class="form-group" style="margin-bottom:0; flex:1;"><input type="time" id="modal-recur-start"></div>
+                <span style="font-weight:bold; color:var(--text-muted);">-</span>
+                <div class="form-group" style="margin-bottom:0; flex:1;"><input type="time" id="modal-recur-end"></div>
+                <select id="modal-recur-weeks" style="padding:0.6rem; border-radius:8px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color);">
+                    <option value="4">4 v</option>
+                    <option value="8">8 v</option>
+                    <option value="12">12 v</option>
+                </select>
+                <button class="btn btn-secondary" style="margin-top:0; width:auto;" onclick="addRecurringShift()">Lägg till</button>
+            </div>
         </div>
     </div>
 
@@ -714,6 +782,10 @@
             <button class="btn btn-primary" onclick="saveSettings()">💾 Spara inställningar</button>
 
             <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--card-border);">
+            <h4 style="margin: 0 0 0.75rem 0;">📋 Sparade Lönespecar</h4>
+            <ul id="saved-payslips-list" class="log-list" style="max-height: 180px; overflow-y: auto; margin-bottom: 0.5rem;"></ul>
+
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--card-border);">
             <h4 style="margin: 0 0 1rem 0;">💾 Säkerhetskopiering</h4>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <button class="btn btn-export" style="flex: 1;" onclick="downloadBackup()">📥 Ladda ner backup</button>
@@ -725,12 +797,31 @@
         </div>
     </div>
 
+    <!-- ===== HISTORY MODAL ===== -->
+    <div id="history-modal" class="modal">
+        <div class="modal-content" style="max-width: 680px;">
+            <button class="modal-close" onclick="closeHistoryModal()">✖</button>
+            <h2 id="history-modal-title" style="margin-top:0; color:#3b82f6;">Historik</h2>
+            <p id="history-modal-summary" style="color:var(--text-muted); margin-top:-0.5rem;"></p>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr><th>Datum</th><th>Vanlig tid</th><th style="color:#8b5cf6;">OB</th><th style="color:#f97316;">Övertid</th><th>Rast</th><th>Bruttolön</th></tr>
+                    </thead>
+                    <tbody id="history-modal-body"></tbody>
+                </table>
+            </div>
+            <p id="history-modal-empty" style="color:var(--text-muted); text-align:center; padding:2rem; display:none;">Ingen historik registrerad.</p>
+        </div>
+    </div>
+
     <script>
         // ================================================================
         // 1. DATABAS & GLOBAL STATE
         // ================================================================
-        const DB_KEY   = 'timetrack_pro_v3';
-        const LOGS_KEY = 'timetrack_logs_v3';
+        const DB_KEY       = 'timetrack_pro_v3';
+        const LOGS_KEY     = 'timetrack_logs_v3';
+        const PAYSLIPS_KEY = 'tt_payslips';
 
         const defaultEmployees = [
             { id: "1", name: "Admin",          pin: "9999", role: "admin",   wage: 0,   status: "Utloggad", activeSession: null, workedHistory: [], schedule: [],                                                    vacationDaysLeft: 25, sickDaysUsed: 0 },
@@ -746,12 +837,16 @@
         const shownReminders  = new Set();
         let inactivityTimer   = null;
         const INACTIVITY_MS   = 15 * 60 * 1000; // 15 minutes
+        let savedPayslips     = JSON.parse(localStorage.getItem(PAYSLIPS_KEY)) || [];
 
         // Migrate existing employees — add new fields if missing
         employees.forEach(emp => {
             if (emp.vacationDaysLeft === undefined) emp.vacationDaysLeft = 25;
             if (emp.sickDaysUsed    === undefined) emp.sickDaysUsed    = 0;
-            emp.workedHistory.forEach(s => { if (s.otHours === undefined) s.otHours = 0; });
+            emp.workedHistory.forEach(s => {
+                if (s.otHours      === undefined) s.otHours      = 0;
+                if (s.breakMinutes === undefined) s.breakMinutes = 0;
+            });
         });
 
         function saveData() {
@@ -859,6 +954,18 @@
         function clearPinError() {
             document.getElementById('pin-error').innerText = '';
             document.getElementById('login-pin').classList.remove('shake');
+        }
+
+        function pinInput(digit) {
+            const inp = document.getElementById('login-pin');
+            if (inp.value.length < 4) { inp.value += digit; clearPinError(); }
+            if (inp.value.length === 4) doLogin(); // auto-submit when full
+        }
+
+        function pinClear() {
+            const inp = document.getElementById('login-pin');
+            inp.value = inp.value.slice(0, -1);
+            clearPinError();
         }
 
         function doLogin() {
@@ -1082,6 +1189,11 @@
             const split    = calculateOBSplit(currentUser.activeSession);
             const totalHrs = split.regularHours + split.obHours;
 
+            // Break duration
+            const totalBreakMs  = currentUser.activeSession.breaks
+                .reduce((sum, b) => sum + ((b.end || Date.now()) - b.start), 0);
+            const breakMinutes  = Math.round(totalBreakMs / 60000);
+
             // Overtime: hours beyond 8h in the same calendar day
             const today         = new Date().toLocaleDateString('sv-SE');
             const alreadyToday  = currentUser.workedHistory
@@ -1090,10 +1202,11 @@
             const otHours = Math.max(0, alreadyToday + totalHrs - 8);
 
             currentUser.workedHistory.push({
-                date:    today,
-                hours:   split.regularHours,
-                obHours: split.obHours,
-                otHours: otHours
+                date:         today,
+                hours:        split.regularHours,
+                obHours:      split.obHours,
+                otHours:      otHours,
+                breakMinutes: breakMinutes
             });
 
             currentUser.status        = 'Utloggad';
@@ -1174,11 +1287,41 @@
             document.getElementById('payslip-statlig').innerText    = "-" + Math.round(tax.statlig).toLocaleString('sv-SE')  + " kr";
             document.getElementById('payslip-net-total').innerText  = Math.round(net).toLocaleString('sv-SE') + " kr";
 
+            // Auto-save snapshot (one per employee per month)
+            savePayslipSnapshot({
+                empId: currentUser.id, empName: currentUser.name,
+                gross, net, regPay, obPay, otPay,
+                date: new Date().toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })
+            });
+
             document.getElementById('payslip-modal').classList.add('active');
             confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'] });
         }
 
         function closePayslipModal() { document.getElementById('payslip-modal').classList.remove('active'); }
+
+        function savePayslipSnapshot(data) {
+            const month = new Date().toLocaleDateString('sv-SE', { year: 'numeric', month: '2-digit' });
+            savedPayslips = savedPayslips.filter(p => !(p.empId === data.empId && p.month === month));
+            savedPayslips.unshift({ ...data, month, savedAt: Date.now() });
+            if (savedPayslips.length > 100) savedPayslips.pop();
+            localStorage.setItem(PAYSLIPS_KEY, JSON.stringify(savedPayslips));
+        }
+
+        function renderSavedPayslips() {
+            const list = document.getElementById('saved-payslips-list');
+            if (!list) return;
+            if (!savedPayslips.length) {
+                list.innerHTML = '<li><em style="color:var(--text-muted)">Inga sparade lönespecar ännu.</em></li>';
+                return;
+            }
+            list.innerHTML = savedPayslips.slice(0, 24).map(p =>
+                `<li>
+                    <span><strong>${p.empName}</strong> — ${p.month}</span>
+                    <span style="color:var(--text-muted);">${Math.round(p.net || 0).toLocaleString('sv-SE')} kr netto</span>
+                </li>`
+            ).join('');
+        }
 
         // ================================================================
         // 10. ADMIN-VY & LÖNEPERIODER
@@ -1234,6 +1377,7 @@
                     <td><strong>${Math.round(gross).toLocaleString('sv-SE')} kr</strong></td>
                     <td>
                         <button class="btn-sm btn-edit"   onclick="openEditModal('${emp.id}')">Redigera</button>
+                        <button class="btn-sm" style="background:#10b981;" onclick="openHistoryModal('${emp.id}')">Historik</button>
                         <button class="btn-sm btn-delete" onclick="deleteEmployee('${emp.id}')">✖</button>
                     </td>
                 </tr>`;
@@ -1418,6 +1562,7 @@
 
         function openSettingsModal() {
             document.getElementById('company-name-input').value = localStorage.getItem('tt_company') || '';
+            renderSavedPayslips();
             document.getElementById('settings-modal').classList.add('active');
         }
 
@@ -1453,14 +1598,94 @@
         }
 
         // ================================================================
-        // 15. BACKUP & ÅTERSTÄLLNING
+        // 15. ÅTERKOMMANDE SCHEMA
+        // ================================================================
+        function addRecurringShift() {
+            const id        = document.getElementById('edit-emp-id').value;
+            const targetDay = parseInt(document.getElementById('modal-recur-day').value);
+            const startTime = document.getElementById('modal-recur-start').value;
+            const endTime   = document.getElementById('modal-recur-end').value;
+            const weeks     = parseInt(document.getElementById('modal-recur-weeks').value);
+
+            if (!startTime || !endTime) return showToast("Fyll i starttid och sluttid.", "warning");
+            if (startTime >= endTime)   return showToast("Sluttiden måste vara efter start.", "error");
+
+            const emp = employees.find(e => e.id === id);
+
+            // Find the next future occurrence of the chosen weekday
+            const base = new Date(); base.setHours(0, 0, 0, 0);
+            let daysAhead = (targetDay - base.getDay() + 7) % 7;
+            if (daysAhead === 0) daysAhead = 7; // never add today, always future
+            base.setDate(base.getDate() + daysAhead);
+
+            let added = 0;
+            for (let w = 0; w < weeks; w++) {
+                const dayStr = base.toISOString().slice(0, 10);
+                if (!emp.schedule.some(s => s.day === dayStr && s.time === `${startTime} - ${endTime}`)) {
+                    emp.schedule.push({ day: dayStr, time: `${startTime} - ${endTime}` });
+                    added++;
+                }
+                base.setDate(base.getDate() + 7);
+            }
+
+            saveData(); renderModalSchedule(id);
+            showToast(`${added} återkommande pass tillagda!`, 'success');
+        }
+
+        // ================================================================
+        // 16. HISTORIKVY PER ANSTÄLLD
+        // ================================================================
+        function openHistoryModal(id) {
+            const emp = employees.find(e => e.id === id);
+            document.getElementById('history-modal-title').innerText = `📋 Historik: ${emp.name}`;
+
+            const empty = document.getElementById('history-modal-empty');
+            const body  = document.getElementById('history-modal-body');
+
+            if (!emp.workedHistory.length) {
+                body.innerHTML = '';
+                empty.style.display = 'block';
+                document.getElementById('history-modal-summary').innerText = '';
+            } else {
+                empty.style.display = 'none';
+                const sorted = [...emp.workedHistory].sort((a, b) => b.date.localeCompare(a.date));
+
+                body.innerHTML = sorted.map(s => {
+                    const ot    = s.otHours || 0;
+                    const pay   = (s.hours * emp.wage) + (s.obHours * emp.wage * 1.5) + (ot * emp.wage * 0.5);
+                    return `<tr>
+                        <td>${s.date}</td>
+                        <td>${s.hours.toFixed(2)}h</td>
+                        <td style="color:#8b5cf6;">${s.obHours.toFixed(2)}h</td>
+                        <td style="color:#f97316;">${ot.toFixed(2)}h</td>
+                        <td style="color:var(--text-muted);">${s.breakMinutes || 0} min</td>
+                        <td>${Math.round(pay).toLocaleString('sv-SE')} kr</td>
+                    </tr>`;
+                }).join('');
+
+                const tot = emp.workedHistory.reduce(
+                    (a, s) => ({ h: a.h + s.hours, ob: a.ob + s.obHours, ot: a.ot + (s.otHours || 0) }),
+                    { h: 0, ob: 0, ot: 0 }
+                );
+                document.getElementById('history-modal-summary').innerText =
+                    `Totalt: ${tot.h.toFixed(1)}h vanlig + ${tot.ob.toFixed(1)}h OB + ${tot.ot.toFixed(1)}h övertid`;
+            }
+
+            document.getElementById('history-modal').classList.add('active');
+        }
+
+        function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); }
+
+        // ================================================================
+        // 17. BACKUP & ÅTERSTÄLLNING (se HTML-knapparna i inställningar)
         // ================================================================
         function downloadBackup() {
             const data = {
-                version:    1,
-                exportedAt: new Date().toISOString(),
+                version:       1,
+                exportedAt:    new Date().toISOString(),
                 employees,
-                logs
+                logs,
+                savedPayslips
             };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url  = URL.createObjectURL(blob);
@@ -1487,8 +1712,10 @@
                             `Återställa backup från ${date}? All nuvarande data ersätts.`,
                             'Återställ backup'
                         );
-                        employees = data.employees;
-                        logs      = data.logs || [];
+                        employees     = data.employees;
+                        logs          = data.logs || [];
+                        savedPayslips = data.savedPayslips || [];
+                        localStorage.setItem(PAYSLIPS_KEY, JSON.stringify(savedPayslips));
                         // Ensure new fields exist on restored data
                         employees.forEach(emp => {
                             if (emp.vacationDaysLeft === undefined) emp.vacationDaysLeft = 25;
