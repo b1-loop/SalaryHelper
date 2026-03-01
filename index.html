@@ -543,6 +543,7 @@
                     <div class="stats-grid">
                         <div class="stat-box"><span>Vanlig Tid</span><strong id="worker-hours">0h</strong></div>
                         <div class="stat-box"><span>OB-Timmar</span><strong id="worker-ob-hours" style="color: #8b5cf6;">0h</strong></div>
+                        <div class="stat-box"><span>Övertid</span><strong id="worker-ot-hours" style="color: #f97316;">0h</strong></div>
                         <div class="stat-box"><span>Bruttolön</span><strong id="worker-earned">0 kr</strong></div>
                         <div class="stat-box"><span>Semesterdagar kvar</span><strong id="worker-vacation-days" style="color: #10b981;">25</strong></div>
                         <div class="stat-box"><span>Sjukdagar</span><strong id="worker-sick-days" style="color: #ef4444;">0</strong></div>
@@ -638,6 +639,10 @@
                 <span>OB-Tillägg / Helg (<span id="payslip-ob-hours">0</span>h á <span id="payslip-ob-wage">0</span> kr)</span>
                 <span id="payslip-ob-total" style="color: #8b5cf6;">0 kr</span>
             </div>
+            <div class="receipt-row">
+                <span>Övertid &gt;8h/dag (<span id="payslip-ot-hours">0</span>h × 50% tillägg á <span id="payslip-ot-wage">0</span> kr)</span>
+                <span id="payslip-ot-total" style="color: #f97316;">0 kr</span>
+            </div>
             <div class="receipt-total" style="font-size: 1rem;"><span>Bruttolön (Innan skatt)</span><span id="payslip-grand-total">0 kr</span></div>
             <div class="receipt-row" style="color: #ef4444;"><span>Kommunalskatt (31.49%)</span><span id="payslip-kommunal">-0 kr</span></div>
             <div class="receipt-row" style="color: #ef4444; border-bottom: none;"><span>Statlig skatt (20% på belopp över 46 000 kr/mån)</span><span id="payslip-statlig">-0 kr</span></div>
@@ -707,6 +712,16 @@
                 <input type="text" id="company-name-input" placeholder="Mitt Företag AB">
             </div>
             <button class="btn btn-primary" onclick="saveSettings()">💾 Spara inställningar</button>
+
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--card-border);">
+            <h4 style="margin: 0 0 1rem 0;">💾 Säkerhetskopiering</h4>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-export" style="flex: 1;" onclick="downloadBackup()">📥 Ladda ner backup</button>
+                <label class="btn btn-secondary" style="flex: 1; cursor: pointer; justify-content: center;">
+                    📤 Återställ backup
+                    <input type="file" accept=".json" style="display:none;" onchange="restoreBackup(this.files[0]); this.value='';">
+                </label>
+            </div>
         </div>
     </div>
 
@@ -723,17 +738,20 @@
             { id: "3", name: "Sara Andersson",  pin: "5678", role: "worker",  wage: 160, status: "Utloggad", activeSession: null, workedHistory: [], schedule: [],                                                    vacationDaysLeft: 25, sickDaysUsed: 0 }
         ];
 
-        let employees       = JSON.parse(localStorage.getItem(DB_KEY))   || defaultEmployees;
-        let logs            = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
-        let currentUser     = null;
+        let employees         = JSON.parse(localStorage.getItem(DB_KEY))   || defaultEmployees;
+        let logs              = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
+        let currentUser       = null;
         let liveTimerInterval = null;
-        let logDisplayCount = 50;
-        const shownReminders = new Set();
+        let logDisplayCount   = 50;
+        const shownReminders  = new Set();
+        let inactivityTimer   = null;
+        const INACTIVITY_MS   = 15 * 60 * 1000; // 15 minutes
 
         // Migrate existing employees — add new fields if missing
         employees.forEach(emp => {
             if (emp.vacationDaysLeft === undefined) emp.vacationDaysLeft = 25;
             if (emp.sickDaysUsed    === undefined) emp.sickDaysUsed    = 0;
+            emp.workedHistory.forEach(s => { if (s.otHours === undefined) s.otHours = 0; });
         });
 
         function saveData() {
@@ -812,6 +830,29 @@
         window.addEventListener('offline', () => updateNetworkStatus(false));
         if (!navigator.onLine) updateNetworkStatus(false);
 
+        // Enter key on PIN field triggers login
+        document.getElementById('login-pin').addEventListener('keydown', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        // ================================================================
+        // INAKTIVITETS-TIMEOUT (15 min)
+        // ================================================================
+        function resetInactivityTimer() {
+            if (!currentUser) return;
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                if (currentUser) {
+                    showToast('Automatisk utloggning efter 15 min inaktivitet.', 'warning');
+                    logout();
+                }
+            }, INACTIVITY_MS);
+        }
+
+        ['mousemove', 'keydown', 'click', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, resetInactivityTimer, { passive: true });
+        });
+
         // ================================================================
         // 5. INLOGGNING
         // ================================================================
@@ -852,6 +893,7 @@
                 document.getElementById('settings-btn').classList.add('hidden');
                 loadWorkerView();
                 showToast("Välkommen!", "success");
+                resetInactivityTimer();
 
                 // Request notification permission and start reminder check
                 if ('Notification' in window) Notification.requestPermission();
@@ -862,6 +904,7 @@
 
         function logout() {
             clearInterval(liveTimerInterval);
+            clearTimeout(inactivityTimer);
             currentUser = null;
             document.getElementById('app-content').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
@@ -950,14 +993,16 @@
         function loadWorkerView() {
             updateWorkerControls();
 
-            let totHrs = 0, obHrs = 0;
-            currentUser.workedHistory.forEach(s => { totHrs += s.hours; obHrs += s.obHours; });
+            let totHrs = 0, obHrs = 0, otHrs = 0;
+            currentUser.workedHistory.forEach(s => { totHrs += s.hours; obHrs += s.obHours; otHrs += (s.otHours || 0); });
 
-            document.getElementById('worker-hours').innerText       = totHrs.toFixed(2) + "h";
-            document.getElementById('worker-ob-hours').innerText    = obHrs.toFixed(2)  + "h";
-            document.getElementById('worker-earned').innerText      = Math.round((totHrs * currentUser.wage) + (obHrs * currentUser.wage * 1.5)).toLocaleString('sv-SE') + " kr";
+            const gross = (totHrs * currentUser.wage) + (obHrs * currentUser.wage * 1.5) + (otHrs * currentUser.wage * 0.5);
+            document.getElementById('worker-hours').innerText         = totHrs.toFixed(2) + "h";
+            document.getElementById('worker-ob-hours').innerText      = obHrs.toFixed(2)  + "h";
+            document.getElementById('worker-ot-hours').innerText      = otHrs.toFixed(2)  + "h";
+            document.getElementById('worker-earned').innerText        = Math.round(gross).toLocaleString('sv-SE') + " kr";
             document.getElementById('worker-vacation-days').innerText = currentUser.vacationDaysLeft ?? 25;
-            document.getElementById('worker-sick-days').innerText   = currentUser.sickDaysUsed ?? 0;
+            document.getElementById('worker-sick-days').innerText     = currentUser.sickDaysUsed ?? 0;
 
             const ul = document.getElementById('schedule-list'); ul.innerHTML = '';
             currentUser.schedule.forEach((shift, i) => {
@@ -1037,17 +1082,25 @@
             const split    = calculateOBSplit(currentUser.activeSession);
             const totalHrs = split.regularHours + split.obHours;
 
+            // Overtime: hours beyond 8h in the same calendar day
+            const today         = new Date().toLocaleDateString('sv-SE');
+            const alreadyToday  = currentUser.workedHistory
+                .filter(s => s.date === today)
+                .reduce((sum, s) => sum + s.hours + s.obHours, 0);
+            const otHours = Math.max(0, alreadyToday + totalHrs - 8);
+
             currentUser.workedHistory.push({
-                date:    new Date().toLocaleDateString('sv-SE'),
+                date:    today,
                 hours:   split.regularHours,
-                obHours: split.obHours
+                obHours: split.obHours,
+                otHours: otHours
             });
 
             currentUser.status        = 'Utloggad';
             currentUser.activeSession = null;
-            addLog(`Stämplade ut. Vanlig: ${split.regularHours.toFixed(2)}h, OB: ${split.obHours.toFixed(2)}h`);
+            addLog(`Stämplade ut. Vanlig: ${split.regularHours.toFixed(2)}h, OB: ${split.obHours.toFixed(2)}h, OT: ${otHours.toFixed(2)}h`);
             saveData(); loadWorkerView();
-            showToast(`Utstämplad! ${totalHrs.toFixed(2)}h totalt (OB: ${split.obHours.toFixed(2)}h)`, "success");
+            showToast(`Utstämplad! ${totalHrs.toFixed(2)}h totalt (OB: ${split.obHours.toFixed(2)}h, OT: ${otHours.toFixed(2)}h)`, "success");
         }
 
         function setStatus(status) {
@@ -1094,12 +1147,13 @@
         }
 
         function openPayslipModal() {
-            let totHrs = 0, obHrs = 0;
-            currentUser.workedHistory.forEach(s => { totHrs += s.hours; obHrs += s.obHours; });
+            let totHrs = 0, obHrs = 0, otHrs = 0;
+            currentUser.workedHistory.forEach(s => { totHrs += s.hours; obHrs += s.obHours; otHrs += (s.otHours || 0); });
 
             const regPay = totHrs * currentUser.wage;
             const obPay  = obHrs  * (currentUser.wage * 1.5);
-            const gross  = regPay + obPay;
+            const otPay  = otHrs  * (currentUser.wage * 0.5); // 50% bonus on top of base
+            const gross  = regPay + obPay + otPay;
             const tax    = getTaxBreakdown(gross);
             const net    = gross - tax.total;
 
@@ -1112,6 +1166,9 @@
             document.getElementById('payslip-ob-hours').innerText   = obHrs.toFixed(2);
             document.getElementById('payslip-ob-wage').innerText    = currentUser.wage * 1.5;
             document.getElementById('payslip-ob-total').innerText   = Math.round(obPay).toLocaleString('sv-SE') + " kr";
+            document.getElementById('payslip-ot-hours').innerText   = otHrs.toFixed(2);
+            document.getElementById('payslip-ot-wage').innerText    = (currentUser.wage * 0.5).toFixed(0);
+            document.getElementById('payslip-ot-total').innerText   = Math.round(otPay).toLocaleString('sv-SE') + " kr";
             document.getElementById('payslip-grand-total').innerText = Math.round(gross).toLocaleString('sv-SE') + " kr";
             document.getElementById('payslip-kommunal').innerText   = "-" + Math.round(tax.kommunal).toLocaleString('sv-SE') + " kr";
             document.getElementById('payslip-statlig').innerText    = "-" + Math.round(tax.statlig).toLocaleString('sv-SE')  + " kr";
@@ -1157,12 +1214,13 @@
 
             employees.filter(e => e.role !== 'admin').forEach(emp => {
                 const hist = getFilteredHistory(emp);
-                let totHrs = 0, obHrs = 0;
-                hist.forEach(s => { totHrs += s.hours; obHrs += s.obHours; });
+                let totHrs = 0, obHrs = 0, otHrs = 0;
+                hist.forEach(s => { totHrs += s.hours; obHrs += s.obHours; otHrs += (s.otHours || 0); });
 
                 const regPay = totHrs * emp.wage;
                 const obPay  = obHrs  * (emp.wage * 1.5);
-                const gross  = regPay + obPay;
+                const otPay  = otHrs  * (emp.wage * 0.5);
+                const gross  = regPay + obPay + otPay;
 
                 chartLabels.push(emp.name.split(' ')[0]);
                 chartRegularPay.push(regPay);
@@ -1392,6 +1450,59 @@
             link.setAttribute("download", "Lonelista_Pro.csv");
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
             showToast("CSV nedladdad!", "success");
+        }
+
+        // ================================================================
+        // 15. BACKUP & ÅTERSTÄLLNING
+        // ================================================================
+        function downloadBackup() {
+            const data = {
+                version:    1,
+                exportedAt: new Date().toISOString(),
+                employees,
+                logs
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `timetrack_backup_${new Date().toLocaleDateString('sv-SE')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Backup nedladdad!', 'success');
+        }
+
+        async function restoreBackup(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data.employees)) return showToast('Ogiltig backupfil.', 'error');
+                    const date = data.exportedAt
+                        ? new Date(data.exportedAt).toLocaleDateString('sv-SE')
+                        : 'okänt datum';
+                    try {
+                        await confirmAction(
+                            `Återställa backup från ${date}? All nuvarande data ersätts.`,
+                            'Återställ backup'
+                        );
+                        employees = data.employees;
+                        logs      = data.logs || [];
+                        // Ensure new fields exist on restored data
+                        employees.forEach(emp => {
+                            if (emp.vacationDaysLeft === undefined) emp.vacationDaysLeft = 25;
+                            if (emp.sickDaysUsed    === undefined) emp.sickDaysUsed    = 0;
+                        });
+                        saveData();
+                        showToast('Backup återställd! Laddar om...', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } catch (_) {}
+                } catch (_) {
+                    showToast('Kunde inte läsa backupfilen.', 'error');
+                }
+            };
+            reader.readAsText(file);
         }
 
         function updateChart(labels, regularData, obData) {
