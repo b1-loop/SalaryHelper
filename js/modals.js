@@ -241,10 +241,12 @@ function addRecurringShift() {
 // ================================================================
 // HISTORIKVY — månadsöversikt, admin edit, export (features 4, 5, 6, 10)
 // ================================================================
-let _historyEmpId = null;
+let _historyEmpId    = null;
+let _editSessionIdx  = null;
 
 function openHistoryModal(id) {
-    _historyEmpId    = id;
+    _historyEmpId = id;
+    cancelEditSession();
     const emp        = employees.find(e => e.id === id);
     const isAdmin    = currentUser.role === 'admin';
 
@@ -303,7 +305,10 @@ function openHistoryModal(id) {
                 const pay     = (s.hours * emp.wage) + (s.obHours * emp.wage * 1.5) + (ot * emp.wage * 0.5);
                 const origIdx = emp.workedHistory.indexOf(s);
                 const delBtn  = isAdmin
-                    ? `<td><button class="btn-sm btn-delete" onclick="deleteWorkSession('${id}', ${origIdx})">✖</button></td>`
+                    ? `<td style="white-space:nowrap;">
+                        <button class="btn-sm btn-edit" style="margin-right:0.25rem;" onclick="editWorkSession('${id}', ${origIdx})">✏️</button>
+                        <button class="btn-sm btn-delete" onclick="deleteWorkSession('${id}', ${origIdx})">✖</button>
+                       </td>`
                     : '';
                 html += `<tr>
                     <td>${s.date}</td>
@@ -359,7 +364,50 @@ function openHistoryModal(id) {
     document.getElementById('history-modal').classList.add('active');
 }
 
-function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); }
+function closeHistoryModal() {
+    cancelEditSession();
+    document.getElementById('history-modal').classList.remove('active');
+}
+
+// Feature 4: populate form for editing an existing work session
+function editWorkSession(empId, idx) {
+    const emp = employees.find(e => e.id === empId);
+    if (!emp) return;
+    const s = emp.workedHistory[idx];
+    if (!s) return;
+
+    _editSessionIdx = idx;
+    document.getElementById('history-add-emp-id').value = empId;
+    document.getElementById('manual-date').value         = s.date;
+    document.getElementById('manual-hours').value        = s.hours;
+    document.getElementById('manual-ob').value           = s.obHours;
+    document.getElementById('manual-ot').value           = s.otHours || 0;
+    document.getElementById('manual-break').value        = s.breakMinutes || 0;
+    document.getElementById('manual-note').value         = s.note || '';
+
+    document.getElementById('manual-session-heading').innerText      = '✏️ Redigera arbetspass';
+    document.getElementById('manual-session-btn').innerText          = 'Spara ändringar';
+    document.getElementById('manual-session-cancel').style.display   = '';
+
+    document.getElementById('manual-session-heading').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function cancelEditSession() {
+    _editSessionIdx = null;
+    document.getElementById('manual-date').value         = new Date().toISOString().slice(0, 10);
+    document.getElementById('manual-hours').value        = '';
+    document.getElementById('manual-ob').value           = '';
+    document.getElementById('manual-ot').value           = '';
+    document.getElementById('manual-break').value        = '';
+    document.getElementById('manual-note').value         = '';
+
+    const heading = document.getElementById('manual-session-heading');
+    const btn     = document.getElementById('manual-session-btn');
+    const cancel  = document.getElementById('manual-session-cancel');
+    if (heading) heading.innerText       = '➕ Lägg till arbetspass manuellt';
+    if (btn)     btn.innerText           = 'Lägg till';
+    if (cancel)  cancel.style.display   = 'none';
+}
 
 // Feature 4: delete a single work session
 async function deleteWorkSession(empId, idx) {
@@ -374,7 +422,7 @@ async function deleteWorkSession(empId, idx) {
     } catch (_) {}
 }
 
-// Feature 4: manually add a work session
+// Feature 4: manually add or edit a work session
 function addManualSession() {
     const id    = document.getElementById('history-add-emp-id').value;
     const emp   = employees.find(e => e.id === id);
@@ -385,18 +433,26 @@ function addManualSession() {
     const brk   = parseInt(document.getElementById('manual-break').value)   || 0;
     const note  = document.getElementById('manual-note').value.trim();
 
-    if (!date)                return showToast('Välj ett datum.', 'warning');
+    if (!date)                   return showToast('Välj ett datum.', 'warning');
     if (hours === 0 && ob === 0) return showToast('Ange minst vanlig tid eller OB-tid.', 'warning');
 
-    emp.workedHistory.push({ date, hours, obHours: ob, otHours: ot, breakMinutes: brk, note });
-    document.getElementById('manual-hours').value = '';
-    document.getElementById('manual-ob').value    = '';
-    document.getElementById('manual-ot').value    = '';
-    document.getElementById('manual-break').value = '';
-    document.getElementById('manual-note').value  = '';
-    saveData(); loadAdminData();
-    openHistoryModal(id);
-    showToast('Arbetspass tillagt!', 'success');
+    if (_editSessionIdx !== null) {
+        emp.workedHistory[_editSessionIdx] = { date, hours, obHours: ob, otHours: ot, breakMinutes: brk, note };
+        saveData(); loadAdminData();
+        cancelEditSession();
+        openHistoryModal(id);
+        showToast('Arbetspass uppdaterat!', 'success');
+    } else {
+        emp.workedHistory.push({ date, hours, obHours: ob, otHours: ot, breakMinutes: brk, note });
+        document.getElementById('manual-hours').value = '';
+        document.getElementById('manual-ob').value    = '';
+        document.getElementById('manual-ot').value    = '';
+        document.getElementById('manual-break').value = '';
+        document.getElementById('manual-note').value  = '';
+        saveData(); loadAdminData();
+        openHistoryModal(id);
+        showToast('Arbetspass tillagt!', 'success');
+    }
 }
 
 // Feature 5: export individual employee history as CSV

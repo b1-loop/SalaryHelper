@@ -337,7 +337,7 @@
             <!-- Feature 4: admin — lägg till / ta bort arbetspass -->
             <div id="history-admin-section" class="hidden" style="margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--card-border);">
                 <input type="hidden" id="history-add-emp-id">
-                <h4 style="margin:0 0 0.75rem;">➕ Lägg till arbetspass manuellt</h4>
+                <h4 id="manual-session-heading" style="margin:0 0 0.75rem;">➕ Lägg till arbetspass manuellt</h4>
                 <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:flex-end;">
                     <div class="form-group" style="margin-bottom:0; flex:1; min-width:120px;"><label>Datum</label><input type="date" id="manual-date"></div>
                     <div class="form-group" style="margin-bottom:0; flex:1; min-width:70px;"><label>Vanlig (h)</label><input type="number" id="manual-hours" step="0.25" min="0" placeholder="0"></div>
@@ -345,7 +345,8 @@
                     <div class="form-group" style="margin-bottom:0; flex:1; min-width:70px;"><label>Övertid (h)</label><input type="number" id="manual-ot" step="0.25" min="0" placeholder="0"></div>
                     <div class="form-group" style="margin-bottom:0; flex:1; min-width:60px;"><label>Rast (min)</label><input type="number" id="manual-break" min="0" placeholder="0"></div>
                     <div class="form-group" style="margin-bottom:0; flex:2; min-width:130px;"><label>Kommentar</label><input type="text" id="manual-note" placeholder="Valfritt"></div>
-                    <button class="btn btn-primary" style="width:auto; white-space:nowrap;" onclick="addManualSession()">Lägg till</button>
+                    <button id="manual-session-btn" class="btn btn-primary" style="width:auto; white-space:nowrap;" onclick="addManualSession()">Lägg till</button>
+                    <button id="manual-session-cancel" class="btn" style="width:auto; white-space:nowrap; display:none;" onclick="cancelEditSession()">Avbryt</button>
                 </div>
             </div>
         </div>
