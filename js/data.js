@@ -25,9 +25,12 @@ let savedPayslips     = JSON.parse(localStorage.getItem(PAYSLIPS_KEY)) || [];
 employees.forEach(emp => {
     if (emp.vacationDaysLeft === undefined) emp.vacationDaysLeft = 25;
     if (emp.sickDaysUsed    === undefined) emp.sickDaysUsed    = 0;
+    if (emp.vacationHistory  === undefined) emp.vacationHistory = [];
+    if (emp.sickHistory      === undefined) emp.sickHistory     = [];
     emp.workedHistory.forEach(s => {
         if (s.otHours      === undefined) s.otHours      = 0;
         if (s.breakMinutes === undefined) s.breakMinutes = 0;
+        if (s.note         === undefined) s.note         = '';
     });
 });
 

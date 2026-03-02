@@ -4,8 +4,10 @@
 function isOBTime(date) {
     const day = date.getDay(); // 0=sön, 6=lör
     if (day === 0 || day === 6) return true;
-    const minutes = date.getHours() * 60 + date.getMinutes();
-    return minutes < 7 * 60 || minutes >= 18 * 60;
+    const minutes   = date.getHours() * 60 + date.getMinutes();
+    const obMorning = parseInt(localStorage.getItem('tt_ob_morning') || '7');
+    const obEvening = parseInt(localStorage.getItem('tt_ob_evening') || '18');
+    return minutes < obMorning * 60 || minutes >= obEvening * 60;
 }
 
 function calculateOBSplit(session, endTime = Date.now()) {

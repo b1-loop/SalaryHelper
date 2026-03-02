@@ -108,11 +108,11 @@ function openEditModal(id) {
 function closeEditModal() { document.getElementById('edit-modal').classList.remove('active'); }
 
 function saveEmployeeEdit() {
-    const id         = document.getElementById('edit-emp-id').value;
-    const emp        = employees.find(e => e.id === id);
-    const newName    = document.getElementById('edit-name').value;
-    const newPin     = document.getElementById('edit-pin').value;
-    const newWage    = parseInt(document.getElementById('edit-wage').value);
+    const id          = document.getElementById('edit-emp-id').value;
+    const emp         = employees.find(e => e.id === id);
+    const newName     = document.getElementById('edit-name').value;
+    const newPin      = document.getElementById('edit-pin').value;
+    const newWage     = parseInt(document.getElementById('edit-wage').value);
     const newVacation = parseInt(document.getElementById('edit-vacation-days').value);
 
     if (!newName || !newPin || isNaN(newWage)) return showToast("Fyll i alla fält.", "warning");
@@ -132,15 +132,17 @@ async function clearEmployeeHistory() {
     if (!emp) return;
     try {
         await confirmAction(`Rensa all historik för ${emp.name}? Sjukdagar nollställs men semesterdagar påverkas inte.`, "Rensa historik");
-        emp.workedHistory = [];
-        emp.sickDaysUsed  = 0;
+        emp.workedHistory   = [];
+        emp.sickDaysUsed    = 0;
+        emp.sickHistory     = [];
+        emp.vacationHistory = [];
         addLog(`Historik rensad för ${emp.name}`);
         saveData(); loadAdminData();
         showToast("Historik rensad!", "success");
     } catch (_) {}
 }
 
-// Schema vs faktisk tid
+// Feature 1: sort schedule by date in modal
 function renderModalSchedule(id) {
     const emp  = employees.find(e => e.id === id);
     const list = document.getElementById('modal-schedule-list');
@@ -151,7 +153,10 @@ function renderModalSchedule(id) {
         return;
     }
 
-    emp.schedule.forEach((shift, index) => {
+    const sorted = [...emp.schedule].sort((a, b) => a.day.localeCompare(b.day));
+
+    sorted.forEach(shift => {
+        const index = emp.schedule.indexOf(shift);
         let workedInfo = '';
         const parts = shift.time.split(' - ');
         if (parts.length === 2) {
@@ -234,10 +239,15 @@ function addRecurringShift() {
 }
 
 // ================================================================
-// HISTORIKVY PER ANSTÄLLD
+// HISTORIKVY — månadsöversikt, admin edit, export (features 4, 5, 6, 10)
 // ================================================================
+let _historyEmpId = null;
+
 function openHistoryModal(id) {
-    const emp = employees.find(e => e.id === id);
+    _historyEmpId    = id;
+    const emp        = employees.find(e => e.id === id);
+    const isAdmin    = currentUser.role === 'admin';
+
     document.getElementById('history-modal-title').innerText = `📋 Historik: ${emp.name}`;
 
     const empty = document.getElementById('history-modal-empty');
@@ -251,18 +261,64 @@ function openHistoryModal(id) {
         empty.style.display = 'none';
         const sorted = [...emp.workedHistory].sort((a, b) => b.date.localeCompare(a.date));
 
-        body.innerHTML = sorted.map(s => {
-            const ot    = s.otHours || 0;
-            const pay   = (s.hours * emp.wage) + (s.obHours * emp.wage * 1.5) + (ot * emp.wage * 0.5);
-            return `<tr>
-                <td>${s.date}</td>
-                <td>${s.hours.toFixed(2)}h</td>
-                <td style="color:#8b5cf6;">${s.obHours.toFixed(2)}h</td>
-                <td style="color:#f97316;">${ot.toFixed(2)}h</td>
-                <td style="color:var(--text-muted);">${s.breakMinutes || 0} min</td>
-                <td>${Math.round(pay).toLocaleString('sv-SE')} kr</td>
+        // Feature 6: group by month
+        const byMonth = {};
+        sorted.forEach(s => {
+            const month = s.date.slice(0, 7);
+            if (!byMonth[month]) byMonth[month] = [];
+            byMonth[month].push(s);
+        });
+
+        // Update thead dynamically
+        document.getElementById('history-modal-thead').innerHTML = `<tr>
+            <th>Datum</th>
+            <th>Vanlig tid</th>
+            <th style="color:#8b5cf6;">OB</th>
+            <th style="color:#f97316;">Övertid</th>
+            <th>Rast</th>
+            <th>Kommentar</th>
+            <th>Bruttolön</th>
+            ${isAdmin ? '<th></th>' : ''}
+        </tr>`;
+
+        const colSpan = isAdmin ? 8 : 7;
+        let html = '';
+
+        for (const [month, sessions] of Object.entries(byMonth)) {
+            const monthLabel = new Date(month + '-01').toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' });
+            let mH = 0, mOB = 0, mOT = 0, mPay = 0;
+            sessions.forEach(s => {
+                mH   += s.hours; mOB += s.obHours; mOT += (s.otHours || 0);
+                mPay += (s.hours * emp.wage) + (s.obHours * emp.wage * 1.5) + ((s.otHours || 0) * emp.wage * 0.5);
+            });
+
+            html += `<tr style="background:var(--stat-bg);">
+                <td colspan="${colSpan}" style="font-weight:700; padding:0.6rem 1rem; font-size:0.85rem; text-transform:capitalize;">
+                    📅 ${monthLabel} — ${mH.toFixed(1)}h vanlig + ${mOB.toFixed(1)}h OB | ${Math.round(mPay).toLocaleString('sv-SE')} kr
+                </td>
             </tr>`;
-        }).join('');
+
+            sessions.forEach(s => {
+                const ot      = s.otHours || 0;
+                const pay     = (s.hours * emp.wage) + (s.obHours * emp.wage * 1.5) + (ot * emp.wage * 0.5);
+                const origIdx = emp.workedHistory.indexOf(s);
+                const delBtn  = isAdmin
+                    ? `<td><button class="btn-sm btn-delete" onclick="deleteWorkSession('${id}', ${origIdx})">✖</button></td>`
+                    : '';
+                html += `<tr>
+                    <td>${s.date}</td>
+                    <td>${s.hours.toFixed(2)}h</td>
+                    <td style="color:#8b5cf6;">${s.obHours.toFixed(2)}h</td>
+                    <td style="color:#f97316;">${ot.toFixed(2)}h</td>
+                    <td style="color:var(--text-muted);">${s.breakMinutes || 0} min</td>
+                    <td style="color:var(--text-muted); font-size:0.8rem; max-width:120px; word-break:break-word;">${s.note || ''}</td>
+                    <td>${Math.round(pay).toLocaleString('sv-SE')} kr</td>
+                    ${delBtn}
+                </tr>`;
+            });
+        }
+
+        body.innerHTML = html;
 
         const tot = emp.workedHistory.reduce(
             (a, s) => ({ h: a.h + s.hours, ob: a.ob + s.obHours, ot: a.ot + (s.otHours || 0) }),
@@ -272,13 +328,98 @@ function openHistoryModal(id) {
             `Totalt: ${tot.h.toFixed(1)}h vanlig + ${tot.ob.toFixed(1)}h OB + ${tot.ot.toFixed(1)}h övertid`;
     }
 
+    // Feature 10: absence history
+    const absSection = document.getElementById('history-absence-section');
+    const vacHist    = emp.vacationHistory || [];
+    const sickHist   = emp.sickHistory     || [];
+    if (vacHist.length || sickHist.length) {
+        absSection.classList.remove('hidden');
+        let absHtml = '';
+        if (vacHist.length) {
+            absHtml += `<p style="margin:0 0 0.4rem;"><strong>🏖️ Semester (${vacHist.length} dag${vacHist.length !== 1 ? 'ar' : ''}):</strong> ${[...vacHist].sort().reverse().join(', ')}</p>`;
+        }
+        if (sickHist.length) {
+            absHtml += `<p style="margin:0;"><strong>🤒 Sjukdagar (${sickHist.length}):</strong> ${[...sickHist].sort().reverse().join(', ')}</p>`;
+        }
+        document.getElementById('history-absence-content').innerHTML = absHtml;
+    } else {
+        absSection.classList.add('hidden');
+    }
+
+    // Feature 4: admin edit section
+    const adminSection = document.getElementById('history-admin-section');
+    if (isAdmin) {
+        adminSection.classList.remove('hidden');
+        document.getElementById('history-add-emp-id').value = id;
+        document.getElementById('manual-date').value = new Date().toISOString().slice(0, 10);
+    } else {
+        adminSection.classList.add('hidden');
+    }
+
     document.getElementById('history-modal').classList.add('active');
 }
 
 function closeHistoryModal() { document.getElementById('history-modal').classList.remove('active'); }
 
+// Feature 4: delete a single work session
+async function deleteWorkSession(empId, idx) {
+    const emp = employees.find(e => e.id === empId);
+    if (!emp) return;
+    try {
+        await confirmAction(`Ta bort arbetspasset ${emp.workedHistory[idx]?.date}?`, 'Ta bort pass');
+        emp.workedHistory.splice(idx, 1);
+        saveData(); loadAdminData();
+        openHistoryModal(empId);
+        showToast('Arbetspass borttaget.', 'warning');
+    } catch (_) {}
+}
+
+// Feature 4: manually add a work session
+function addManualSession() {
+    const id    = document.getElementById('history-add-emp-id').value;
+    const emp   = employees.find(e => e.id === id);
+    const date  = document.getElementById('manual-date').value;
+    const hours = parseFloat(document.getElementById('manual-hours').value) || 0;
+    const ob    = parseFloat(document.getElementById('manual-ob').value)    || 0;
+    const ot    = parseFloat(document.getElementById('manual-ot').value)    || 0;
+    const brk   = parseInt(document.getElementById('manual-break').value)   || 0;
+    const note  = document.getElementById('manual-note').value.trim();
+
+    if (!date)                return showToast('Välj ett datum.', 'warning');
+    if (hours === 0 && ob === 0) return showToast('Ange minst vanlig tid eller OB-tid.', 'warning');
+
+    emp.workedHistory.push({ date, hours, obHours: ob, otHours: ot, breakMinutes: brk, note });
+    document.getElementById('manual-hours').value = '';
+    document.getElementById('manual-ob').value    = '';
+    document.getElementById('manual-ot').value    = '';
+    document.getElementById('manual-break').value = '';
+    document.getElementById('manual-note').value  = '';
+    saveData(); loadAdminData();
+    openHistoryModal(id);
+    showToast('Arbetspass tillagt!', 'success');
+}
+
+// Feature 5: export individual employee history as CSV
+function exportEmployeeCSV() {
+    if (!_historyEmpId) return;
+    const emp = employees.find(e => e.id === _historyEmpId);
+    if (!emp) return;
+
+    let csv = "data:text/csv;charset=utf-8,Datum;Vanlig Tid(h);OB(h);Övertid(h);Rast(min);Bruttolön(kr);Kommentar\n";
+    [...emp.workedHistory].sort((a, b) => b.date.localeCompare(a.date)).forEach(s => {
+        const pay = (s.hours * emp.wage) + (s.obHours * emp.wage * 1.5) + ((s.otHours || 0) * emp.wage * 0.5);
+        csv += `${s.date};${s.hours.toFixed(2)};${s.obHours.toFixed(2)};${(s.otHours || 0).toFixed(2)};${s.breakMinutes || 0};${Math.round(pay)};"${(s.note || '').replace(/"/g, '""')}"\n`;
+    });
+
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csv));
+    link.setAttribute('download', `historik_${emp.name.replace(/ /g, '_')}.csv`);
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    showToast('CSV nedladdad!', 'success');
+}
+
 // ================================================================
-// INSTÄLLNINGAR & FÖRETAGSNAMN
+// INSTÄLLNINGAR & FÖRETAGSNAMN (feature 8: anpassningsbara OB-tider)
 // ================================================================
 function updateCompanyName() {
     const name = localStorage.getItem('tt_company') || 'TimeTrack';
@@ -287,6 +428,13 @@ function updateCompanyName() {
 
 function openSettingsModal() {
     document.getElementById('company-name-input').value = localStorage.getItem('tt_company') || '';
+
+    // Feature 8: load OB times
+    const obEvening = localStorage.getItem('tt_ob_evening') || '18';
+    const obMorning = localStorage.getItem('tt_ob_morning') || '7';
+    document.getElementById('ob-evening-input').value = `${String(obEvening).padStart(2,'0')}:00`;
+    document.getElementById('ob-morning-input').value = `${String(obMorning).padStart(2,'0')}:00`;
+
     renderSavedPayslips();
     document.getElementById('settings-modal').classList.add('active');
 }
@@ -297,6 +445,13 @@ function saveSettings() {
     const name = document.getElementById('company-name-input').value.trim();
     if (name) localStorage.setItem('tt_company', name);
     else      localStorage.removeItem('tt_company');
+
+    // Feature 8: save OB times
+    const obEvening = document.getElementById('ob-evening-input').value;
+    const obMorning = document.getElementById('ob-morning-input').value;
+    if (obEvening) localStorage.setItem('tt_ob_evening', parseInt(obEvening.split(':')[0]).toString());
+    if (obMorning) localStorage.setItem('tt_ob_morning', parseInt(obMorning.split(':')[0]).toString());
+
     updateCompanyName();
     closeSettingsModal();
     showToast("Inställningar sparade!", "success");
@@ -345,6 +500,8 @@ async function restoreBackup(file) {
                 employees.forEach(emp => {
                     if (emp.vacationDaysLeft === undefined) emp.vacationDaysLeft = 25;
                     if (emp.sickDaysUsed    === undefined) emp.sickDaysUsed    = 0;
+                    if (emp.vacationHistory  === undefined) emp.vacationHistory = [];
+                    if (emp.sickHistory      === undefined) emp.sickHistory     = [];
                 });
                 saveData();
                 showToast('Backup återställd! Laddar om...', 'success');

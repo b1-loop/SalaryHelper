@@ -505,3 +505,39 @@ tr:hover { background-color: var(--table-hover); }
     }
     .modal-close, #payslip-print-btn { display: none !important; }
 }
+
+/* Kalendervy för schema */
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 0.5rem;
+}
+
+.cal-header {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 0.4rem 0;
+    text-transform: uppercase;
+}
+
+.cal-day {
+    background: var(--stat-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 0.35rem;
+    min-height: 50px;
+    font-size: 0.78rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cal-day.empty { background: transparent; border-color: transparent; }
+.cal-day.has-shift { background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
+.cal-day.is-today { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25); }
+
+.cal-date { font-weight: 700; font-size: 0.82rem; }
+.cal-shift { font-size: 0.62rem; color: #3b82f6; font-weight: 600; line-height: 1.3; }
