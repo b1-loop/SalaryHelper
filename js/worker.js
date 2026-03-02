@@ -43,8 +43,19 @@ function loadWorkerView() {
     document.getElementById('worker-sick-days').innerText     = currentUser.sickDaysUsed ?? 0;
 
     const ul = document.getElementById('schedule-list'); ul.innerHTML = '';
+    const todayStr = new Date().toLocaleDateString('sv-SE');
     currentUser.schedule.forEach((shift, i) => {
-        ul.innerHTML += `<li><div><strong>${shift.day}</strong> <span style="margin-left:10px; color:var(--text-muted);">${shift.time}</span></div><button class="btn-sm btn-delete" onclick="deleteShiftWorker(${i})">✖ Ta bort</button></li>`;
+        const isPastOrToday = shift.day <= todayStr;
+        const completeBtn = isPastOrToday
+            ? `<button class="btn-sm" style="background:#10b981; margin-right:0.4rem;" onclick="completeScheduledShift(${i})">✅ Färdig</button>`
+            : '';
+        ul.innerHTML += `<li>
+            <div><strong>${shift.day}</strong> <span style="margin-left:10px; color:var(--text-muted);">${shift.time}</span></div>
+            <div style="display:flex;gap:0.25rem;align-items:center;">
+                ${completeBtn}
+                <button class="btn-sm btn-delete" onclick="deleteShiftWorker(${i})">✖ Ta bort</button>
+            </div>
+        </li>`;
     });
 }
 
@@ -177,4 +188,43 @@ function addShift() {
 function deleteShiftWorker(i) {
     currentUser.schedule.splice(i, 1);
     saveData(); loadWorkerView(); showToast("Pass borttaget", "warning");
+}
+
+function completeScheduledShift(index) {
+    const shift = currentUser.schedule[index];
+    if (!shift) return;
+
+    const parts = shift.time.split(' - ');
+    if (parts.length !== 2) return showToast("Ogiltigt schemaformat.", "error");
+
+    const [startStr, endStr] = parts.map(p => p.trim());
+    const startTs = new Date(`${shift.day}T${startStr}:00`).getTime();
+    const endTs   = new Date(`${shift.day}T${endStr}:00`).getTime();
+
+    if (isNaN(startTs) || isNaN(endTs)) return showToast("Kunde inte tolka passets tider.", "error");
+    if (endTs <= startTs) return showToast("Sluttiden är inte efter starttiden.", "error");
+
+    const mockSession = { startTime: startTs, breaks: [] };
+    const split    = calculateOBSplit(mockSession, endTs);
+    const totalHrs = split.regularHours + split.obHours;
+
+    // Overtime: hours beyond 8h that calendar day
+    const alreadyThatDay = currentUser.workedHistory
+        .filter(s => s.date === shift.day)
+        .reduce((sum, s) => sum + s.hours + s.obHours, 0);
+    const otHours = Math.max(0, alreadyThatDay + totalHrs - 8);
+
+    currentUser.workedHistory.push({
+        date:         shift.day,
+        hours:        split.regularHours,
+        obHours:      split.obHours,
+        otHours:      otHours,
+        breakMinutes: 0
+    });
+
+    currentUser.schedule.splice(index, 1);
+
+    addLog(`Slutförde schemalagt pass ${shift.day} ${shift.time} — ${totalHrs.toFixed(2)}h (OB: ${split.obHours.toFixed(2)}h, OT: ${otHours.toFixed(2)}h)`);
+    saveData(); loadWorkerView();
+    showToast(`Pass klart! ${totalHrs.toFixed(2)}h (OB: ${split.obHours.toFixed(2)}h, OT: ${otHours.toFixed(2)}h)`, "success");
 }

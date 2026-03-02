@@ -8,8 +8,7 @@ function isOBTime(date) {
     return minutes < 7 * 60 || minutes >= 18 * 60;
 }
 
-function calculateOBSplit(session) {
-    const endTime   = Date.now();
+function calculateOBSplit(session, endTime = Date.now()) {
     const SLICE_MS  = 5 * 60 * 1000;
 
     // Build worked intervals by excluding breaks
