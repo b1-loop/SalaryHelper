@@ -46,6 +46,12 @@ Kräver ingen backend eller databas — allt sparas i webbläsarens `localStorag
 | **Skriv ut / Spara PDF** | Knapp i lönespecifikationen som öppnar utskriftsdialogen — allt utom specen döljs |
 | **Min profil** | Anställda uppdaterar sin kontaktinformation (personnummer, telefon, e-post, gatuadress, postnummer, stad) — synlig för admin |
 | **Byt PIN-kod** | Anställda kan byta sin egen PIN direkt från profilkortet (validerar gamla PIN, 4-siffror, unikhet) |
+| **Friskanmälan / Avsluta semester** | När status är Sjuk visas "✅ Friskanmäl dig" och när status är Semester visas "✅ Avsluta semester" — ett klick återställer till Utloggad |
+| **Semesteransökan** | Anställda skickar en ansökan (datum + anledning) och ser statusen (Väntar/Godkänd/Nekad) direkt i vyn |
+| **Inloggningsmeddelande** | Admin-meddelande visas som en lila banner när anställda loggar in — stängs per session, dyker upp igen om meddelandet ändras |
+| **Lönedag-nedräkning** | "Dagar till lön"-ruta i stats-grid räknar ned till konfigurerat lönedatum. Visar 🎉 Idag! på lönedagen |
+| **Anställningsinformation** | Visar anställningsdatum och beräknad tjänstetid (X år Y mån) i ett eget kort |
+| **Mina certifikat** | Anställda ser sina certifikat och kompetenser (registrerade av admin) med utgångsdatum och färgkodad status |
 
 ---
 
@@ -75,6 +81,11 @@ Kräver ingen backend eller databas — allt sparas i webbläsarens `localStorag
 | **CSV-export (all historik)** | Exportera alla anställdas kompletta arbetshistorik som en samlad CSV-fil |
 | **CSV-export (personalregister)** | Exportera alla anställdas kontaktuppgifter (personnummer, telefon, e-post, adress m.m.) som CSV |
 | **CSV-export (per anställd)** | Ladda ner en enskild anställds historik som CSV direkt från historikmodalen |
+| **Semesteransökningar** | Admin ser alla väntande ansökningar (med antal i rubriken), kan skriva en kommentar och godkänna eller neka — godkännande drar dagarna automatiskt och fyller i semesterhistoriken |
+| **Certifikat & kompetenser** | Admin lägger till certifikat med utgångsdatum per anställd — färgkodat grön/orange/röd. Varningskort visar alla certifikat som löper ut inom 60 dagar |
+| **Anställningsdatum** | Admin registrerar startdatum per anställd — ingår i personalregister-CSV |
+| **Inloggningsmeddelande** | Admin skriver ett meddelande i ⚙️ Inställningar som visas som banner för alla anställda vid nästa inloggning |
+| **Lönedatum** | Admin konfigurerar lönedagen (1–31) under ⚙️ Inställningar — styr anställdas nedräkning |
 | **Konfigurerbar övertidsgräns** | Admin ställer in efter hur många timmar/dag övertid räknas under ⚙️ Inställningar (standard: 8h) |
 | **Anpassningsbara OB-tider** | Admin ställer in kväll- och morgongränser för OB under ⚙️ Inställningar (standard: 18:00 / 07:00) |
 | **Företagsnamn** | Ange företagsnamn under ⚙️ Inställningar — visas i navigeringen och på lönespecen |
@@ -135,17 +146,24 @@ Ingen byggprocess eller Node.js behövs.
 9. **Kalendervy** — Växla till kalendervy för schemat och tillbaka till lista.
 10. **Lönespecifikation** — Klicka *Visa Lönespecifikation*. Visa konfettin, skatteuppdelningen och utskriftsknappen.
 11. **Mina lönespecar** — Klicka *Mina lönespecar* och visa historiken.
-12. **Byt PIN** — Scrolla till profilkortet och visa PIN-bytesformuläret.
-13. **Admin-vy** — Logga ut och logga in som Admin (`9999`).
-14. **Dashboard-statistik** — Visa de fyra statistikrutorna längst upp.
-15. **Löneperiod** — Byt filter till *Denna månad* och visa hur totalsiffrorna ändras.
-16. **Övertidsrapport** — Visa stapeldiagrammet med övertid per anställd.
-17. **Semesterplanering** — Scrolla till kalenderkortet och navigera mellan månader.
-18. **Historikvy** — Klicka *Historik* bredvid en anställd. Visa månadsgruppering, frånvarohistorik med kommentarer och månadsdiagrammet.
-19. **Exportera** — Visa de tre CSV-exportknapparna: löneöversikt, all historik, personalregister.
-20. **Inställningar** — Klicka ⚙️ Inställningar, sätt företagsnamn, justera OB-tider och övertidsgräns.
-21. **Backup** — Klicka *Ladda ner backup* och visa den nedladdade JSON-filen.
-22. **Offline** — Stäng av WiFi och visa att indikatorn byter till 🔴 Offline utan att appen slutar fungera.
+12. **Lönedag** — Visa nedräkningen "Dagar till lön" i stats-griden.
+13. **Friskanmäl** — Klicka *Sjuk*, visa bekräftelse-prompten, sedan visa att "✅ Friskanmäl dig"-knappen visas och återställer statusen.
+14. **Semesteransökan** — Scrolla till ansökningskortet, fyll i datum och anledning och skicka in.
+15. **Certifikat** — Visa det egna certifikat-kortet med färgkodad statusindikator.
+16. **Byt PIN** — Scrolla till profilkortet och visa PIN-bytesformuläret.
+17. **Admin-vy** — Logga ut och logga in som Admin (`9999`).
+18. **Inloggningsmeddelande** — Öppna ⚙️ Inställningar, skriv ett meddelande, spara. Logga in som worker och visa bannern.
+19. **Dashboard-statistik** — Visa de fyra statistikrutorna längst upp.
+20. **Semesteransökningar** — Visa kortet med väntande ansökningar, godkänn en med kommentar.
+21. **Certifikat-varningar** — Visa varningskortet för certifikat som snart löper ut.
+22. **Löneperiod** — Byt filter till *Denna månad* och visa hur totalsiffrorna ändras.
+23. **Övertidsrapport** — Visa stapeldiagrammet med övertid per anställd.
+24. **Semesterplanering** — Scrolla till kalenderkortet och navigera mellan månader.
+25. **Historikvy** — Klicka *Historik* bredvid en anställd. Visa månadsgruppering, frånvarohistorik med kommentarer och månadsdiagrammet.
+26. **Exportera** — Visa de tre CSV-exportknapparna: löneöversikt, all historik, personalregister (inkl. anst.datum).
+27. **Inställningar** — Visa lönedatum, OB-tider, övertidsgräns och företagsnamn.
+28. **Backup** — Klicka *Ladda ner backup* och visa den nedladdade JSON-filen.
+29. **Offline** — Stäng av WiFi och visa att indikatorn byter till 🔴 Offline utan att appen slutar fungera.
 
 ---
 
@@ -154,7 +172,7 @@ Ingen byggprocess eller Node.js behövs.
 Klistra in detta i webbläsarens konsol (F12 → Console) för att nollställa all data:
 
 ```js
-['timetrack_pro_v3', 'timetrack_logs_v3', 'tt_payslips', 'tt_company', 'tt_ob_evening', 'tt_ob_morning', 'tt_ot_threshold'].forEach(k => localStorage.removeItem(k));
+['timetrack_pro_v3', 'timetrack_logs_v3', 'tt_payslips', 'tt_company', 'tt_ob_evening', 'tt_ob_morning', 'tt_ot_threshold', 'tt_payday', 'tt_admin_message'].forEach(k => localStorage.removeItem(k));
 location.reload();
 ```
 
@@ -171,9 +189,9 @@ js/
   data.js           ← Global state, konstanter, localStorage-nycklar, datamigration
   utils.js          ← showToast, updateClock, aktivitetslogg, toggleDarkMode, nätverksstatus
   calculations.js   ← isOBTime, calculateOBSplit, getTaxBreakdown, getElapsedMs, getFilteredHistory
-  worker.js         ← Arbetar-vy, clockIn/Out, toggleBreak, setStatus, schema, kalender, skiftpåminnelser, profil, PIN-byte
-  admin.js          ← Admin-dashboard, lönetabell, sortering, övertidsrapport, semesterplanering, exportCSV, diagram
-  modals.js         ← Alla modaler: lönespec, redigera, bekräfta, inställningar, historik, backup, mina lönespecar
+  worker.js         ← Arbetar-vy, clockIn/Out, schema, kalender, profil, PIN-byte, semesteransökan, certifikat, frånvaro, lönedag
+  admin.js          ← Admin-dashboard, lönetabell, sortering, övertidsrapport, semesterplanering, certifikat-varningar, semesteransökningar, exportCSV, diagram
+  modals.js         ← Alla modaler: lönespec, redigera, bekräfta, inställningar, historik, backup, certifikat, mina lönespecar
   auth.js           ← PIN-login, inaktivitetstimeout (15 min), logout
 ```
 
