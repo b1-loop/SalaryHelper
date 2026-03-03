@@ -44,6 +44,8 @@ function loadWorkerView() {
     document.getElementById('worker-earned').innerText        = Math.round(gross).toLocaleString('sv-SE') + " kr";
     document.getElementById('worker-vacation-days').innerText = currentUser.vacationDaysLeft ?? 25;
     document.getElementById('worker-sick-days').innerText     = currentUser.sickDaysUsed ?? 0;
+    const reqDaysLeft = document.getElementById('req-days-left');
+    if (reqDaysLeft) reqDaysLeft.innerText = (currentUser.vacationDaysLeft ?? 25) + ' st';
 
     // Autofill today's date
     const dayInput = document.getElementById('new-shift-day');
@@ -63,9 +65,23 @@ function loadWorkerView() {
     if (_po) _po.value = currentUser.postalCode   || '';
     if (_pc) _pc.value = currentUser.city         || '';
 
+    // Admin message banner
+    const adminMsg   = localStorage.getItem('tt_admin_message');
+    const banner     = document.getElementById('admin-message-banner');
+    const dismissed  = sessionStorage.getItem('tt_msg_dismissed');
+    if (banner) {
+        if (adminMsg && adminMsg !== dismissed) {
+            document.getElementById('admin-message-text').innerText = adminMsg;
+            banner.classList.remove('hidden');
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
+
     // Feature 1 & 7: render schedule (list or calendar)
     renderScheduleSection();
     renderWorkerChart();
+    renderMyVacationRequests();
 }
 
 function renderWorkerChart() {
@@ -190,12 +206,24 @@ function updateWorkerControls() {
     const timerEl      = document.getElementById('active-session-timer');
     clearInterval(liveTimerInterval);
 
-    if (['Utloggad', 'Sjuk', 'Semester'].includes(currentUser.status)) {
+    if (currentUser.status === 'Utloggad') {
         timerEl.style.display = 'none';
         btnContainer.innerHTML = `
             <button class="btn btn-in"    onclick="clockIn()">▶ Klocka In (GPS)</button>
             <button class="btn btn-sick"  onclick="promptAbsence('Sjuk')">🤒 Sjuk</button>
             <button class="btn btn-leave" onclick="promptAbsence('Semester')">🏖️ Ledighet</button>
+        `;
+    } else if (currentUser.status === 'Sjuk') {
+        timerEl.style.display = 'none';
+        btnContainer.innerHTML = `
+            <button class="btn btn-in" onclick="clockIn()">▶ Klocka In (GPS)</button>
+            <button class="btn" style="background:#10b981;" onclick="returnToWork()">✅ Friskanmäl dig</button>
+        `;
+    } else if (currentUser.status === 'Semester') {
+        timerEl.style.display = 'none';
+        btnContainer.innerHTML = `
+            <button class="btn btn-in" onclick="clockIn()">▶ Klocka In (GPS)</button>
+            <button class="btn" style="background:#10b981;" onclick="returnToWork()">✅ Avsluta semester</button>
         `;
     } else if (currentUser.status === 'Inloggad') {
         timerEl.style.display = 'block'; startLiveTimer();
@@ -340,6 +368,62 @@ function setStatus(status, comment = '') {
     currentUser.status = status;
     addLog(`Satte status: ${status}`);
     saveData(); loadWorkerView(); showToast(`Status satt till ${status}`);
+}
+
+function returnToWork() {
+    const prev = currentUser.status;
+    currentUser.status = 'Utloggad';
+    addLog(`Återgick till arbete (från: ${prev})`);
+    saveData(); loadWorkerView();
+    showToast(prev === 'Sjuk' ? '✅ Friskanmäld! Välkommen tillbaka.' : '✅ Semester avslutad. Välkommen tillbaka!', 'success');
+}
+
+function dismissAdminMessage() {
+    const msg = localStorage.getItem('tt_admin_message') || '';
+    sessionStorage.setItem('tt_msg_dismissed', msg);
+    document.getElementById('admin-message-banner').classList.add('hidden');
+}
+
+function submitVacationRequest() {
+    const start  = document.getElementById('req-start-date').value;
+    const end    = document.getElementById('req-end-date').value;
+    const reason = document.getElementById('req-reason').value.trim();
+    if (!start || !end) return showToast('Välj start- och slutdatum.', 'warning');
+    if (end < start)    return showToast('Slutdatum måste vara efter startdatum.', 'error');
+    const days = Math.round((new Date(end) - new Date(start)) / 86400000) + 1;
+    if (days > (currentUser.vacationDaysLeft ?? 25))
+        return showToast(`Du har bara ${currentUser.vacationDaysLeft ?? 25} semesterdagar kvar!`, 'error');
+    if (!currentUser.vacationRequests) currentUser.vacationRequests = [];
+    currentUser.vacationRequests.unshift({ id: Date.now().toString(), startDate: start, endDate: end, days, reason, status: 'pending', createdAt: Date.now(), reviewNote: '' });
+    document.getElementById('req-start-date').value = '';
+    document.getElementById('req-end-date').value   = '';
+    document.getElementById('req-reason').value     = '';
+    saveData();
+    addLog(`Skickade semesteransökan: ${start} – ${end} (${days} dag${days !== 1 ? 'ar' : ''})`);
+    renderMyVacationRequests();
+    showToast('Ansökan skickad! Väntar på godkännande.', 'success');
+}
+
+function renderMyVacationRequests() {
+    const list = document.getElementById('my-vacation-requests');
+    if (!list) return;
+    const reqs = currentUser.vacationRequests || [];
+    if (!reqs.length) { list.innerHTML = ''; return; }
+    const badge = s => s === 'approved'
+        ? '<span style="background:#10b981; color:#fff; border-radius:6px; padding:0.2rem 0.5rem; font-size:0.75rem; font-weight:700;">✅ Godkänd</span>'
+        : s === 'rejected'
+        ? '<span style="background:#ef4444; color:#fff; border-radius:6px; padding:0.2rem 0.5rem; font-size:0.75rem; font-weight:700;">❌ Nekad</span>'
+        : '<span style="background:#f59e0b; color:#fff; border-radius:6px; padding:0.2rem 0.5rem; font-size:0.75rem; font-weight:700;">⏳ Väntar</span>';
+    list.innerHTML = '<h4 style="margin:0 0 0.6rem;">Mina ansökningar</h4>' +
+        reqs.slice(0, 6).map(r => `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--card-border); gap:0.5rem; flex-wrap:wrap;">
+            <div>
+                <strong>${r.startDate} – ${r.endDate}</strong>
+                <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">(${r.days} dag${r.days !== 1 ? 'ar' : ''})</span>
+                ${r.reason ? `<div style="color:var(--text-muted); font-size:0.8rem;">${r.reason}</div>` : ''}
+                ${r.reviewNote ? `<div style="color:#ef4444; font-size:0.8rem; font-style:italic;">Admin: ${r.reviewNote}</div>` : ''}
+            </div>
+            ${badge(r.status)}
+        </div>`).join('');
 }
 
 function changePIN() {

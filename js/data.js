@@ -36,6 +36,7 @@ employees.forEach(emp => {
     if (emp.postalCode       === undefined) emp.postalCode       = '';
     if (emp.city             === undefined) emp.city             = '';
     if (emp.personnummer     === undefined) emp.personnummer     = '';
+    if (emp.vacationRequests === undefined) emp.vacationRequests = [];
     emp.workedHistory.forEach(s => {
         if (s.otHours      === undefined) s.otHours      = 0;
         if (s.breakMinutes === undefined) s.breakMinutes = 0;

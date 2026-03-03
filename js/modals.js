@@ -642,7 +642,8 @@ function updateCompanyName() {
 }
 
 function openSettingsModal() {
-    document.getElementById('company-name-input').value = localStorage.getItem('tt_company') || '';
+    document.getElementById('company-name-input').value  = localStorage.getItem('tt_company')       || '';
+    document.getElementById('admin-message-input').value = localStorage.getItem('tt_admin_message') || '';
 
     // OT threshold
     document.getElementById('ot-threshold-input').value = localStorage.getItem('tt_ot_threshold') || '8';
@@ -663,6 +664,10 @@ function saveSettings() {
     const name = document.getElementById('company-name-input').value.trim();
     if (name) localStorage.setItem('tt_company', name);
     else      localStorage.removeItem('tt_company');
+
+    const msg = document.getElementById('admin-message-input').value.trim();
+    if (msg) localStorage.setItem('tt_admin_message', msg);
+    else     localStorage.removeItem('tt_admin_message');
 
     // OT threshold
     const otThr = parseFloat(document.getElementById('ot-threshold-input').value);

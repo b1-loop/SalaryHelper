@@ -17,6 +17,7 @@ function loadAdminData() {
     renderLogs();
     renderOvertimeReport();
     renderSharedCalendar();
+    renderPendingRequests();
 
     // Update sort indicators
     ['name', 'hours', 'ob', 'gross'].forEach(col => {
@@ -119,6 +120,74 @@ async function deleteEmployee(id) {
         employees = employees.filter(e => e.id !== id);
         saveData(); loadAdminData(); showToast("Anställd raderad");
     } catch (_) {}
+}
+
+// ================================================================
+// SEMESTERANSÖKNINGAR
+// ================================================================
+function renderPendingRequests() {
+    const list = document.getElementById('pending-requests-list');
+    if (!list) return;
+    const pending = [];
+    employees.filter(e => e.role !== 'admin').forEach(emp => {
+        (emp.vacationRequests || []).filter(r => r.status === 'pending').forEach(r => {
+            pending.push({ ...r, empId: emp.id, empName: emp.name, daysLeft: emp.vacationDaysLeft ?? 25 });
+        });
+    });
+    const heading = document.getElementById('pending-requests-heading');
+    if (heading) heading.innerText = `📋 Semesteransökningar${pending.length ? ` (${pending.length})` : ''}`;
+    if (!pending.length) {
+        list.innerHTML = '<p style="color:var(--text-muted); padding:0.5rem 0; margin:0;">Inga väntande ansökningar.</p>';
+        return;
+    }
+    pending.sort((a, b) => a.createdAt - b.createdAt);
+    list.innerHTML = pending.map(r => `
+        <div style="padding:0.75rem 0; border-bottom:1px solid var(--card-border);">
+            <div style="margin-bottom:0.4rem;">
+                <strong>${r.empName}</strong>
+                <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">${r.startDate} – ${r.endDate} (${r.days} dag${r.days !== 1 ? 'ar' : ''})</span>
+                <span style="color:var(--text-muted); font-size:0.8rem; margin-left:0.4rem;">| Saldo: ${r.daysLeft} dagar</span>
+                ${r.reason ? `<div style="color:var(--text-muted); font-size:0.8rem; font-style:italic; margin-top:0.2rem;">"${r.reason}"</div>` : ''}
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <input type="text" id="review-note-${r.id}" placeholder="Valfri kommentar till anställd..."
+                    style="flex:1; min-width:150px; padding:0.4rem 0.6rem; border-radius:6px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color); font-size:0.85rem;">
+                <button class="btn-sm" style="background:#10b981;" onclick="approveVacationRequest('${r.empId}','${r.id}')">✅ Godkänn</button>
+                <button class="btn-sm btn-delete" onclick="rejectVacationRequest('${r.empId}','${r.id}')">❌ Neka</button>
+            </div>
+        </div>`).join('');
+}
+
+function approveVacationRequest(empId, reqId) {
+    const emp = employees.find(e => e.id === empId);
+    if (!emp) return;
+    const req = (emp.vacationRequests || []).find(r => r.id === reqId);
+    if (!req) return;
+    const note = document.getElementById(`review-note-${reqId}`)?.value.trim() || '';
+    emp.vacationDaysLeft = Math.max(0, (emp.vacationDaysLeft ?? 25) - req.days);
+    if (!emp.vacationHistory) emp.vacationHistory = [];
+    const start = new Date(req.startDate), end = new Date(req.endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const ds = d.toISOString().slice(0, 10);
+        if (!emp.vacationHistory.some(e => (typeof e === 'string' ? e : e.date) === ds))
+            emp.vacationHistory.push({ date: ds, comment: req.reason || 'Godkänd ansökan' });
+    }
+    req.status = 'approved'; req.reviewNote = note; req.reviewedAt = Date.now();
+    addLog(`Godkände semesteransökan för ${emp.name}: ${req.startDate} – ${req.endDate}`);
+    saveData(); loadAdminData();
+    showToast(`Ansökan godkänd! ${req.days} semesterdagar dragna från ${emp.name}s saldo.`, 'success');
+}
+
+function rejectVacationRequest(empId, reqId) {
+    const emp = employees.find(e => e.id === empId);
+    if (!emp) return;
+    const req = (emp.vacationRequests || []).find(r => r.id === reqId);
+    if (!req) return;
+    const note = document.getElementById(`review-note-${reqId}`)?.value.trim() || '';
+    req.status = 'rejected'; req.reviewNote = note; req.reviewedAt = Date.now();
+    addLog(`Nekade semesteransökan för ${emp.name}: ${req.startDate} – ${req.endDate}`);
+    saveData(); loadAdminData();
+    showToast(`Ansökan nekad.`, 'warning');
 }
 
 // ================================================================
