@@ -22,6 +22,8 @@ function loadAdminData() {
     renderAbsenceStats();
     renderSwapRequests();
     renderAdminMessages();
+    renderRanking();
+    renderScheduleWarnings();
 
     // Update sort indicators
     ['name', 'hours', 'ob', 'gross'].forEach(col => {
@@ -597,4 +599,163 @@ function markAllMessagesRead() {
 function _pushNotification(emp, text) {
     if (!emp.notifications) emp.notifications = [];
     emp.notifications.push({ id: Date.now().toString(), text, createdAt: Date.now(), read: false });
+}
+
+// ================================================================
+// ANSTÄLLD-RANKING (Feature 3)
+// ================================================================
+function renderRanking() {
+    const list = document.getElementById('ranking-list');
+    if (!list) return;
+
+    const metric  = document.getElementById('ranking-metric')?.value || 'hours';
+    const locale  = getLangLocale();
+    const workers = employees.filter(e => e.role !== 'admin').map(emp => {
+        const hist = getFilteredHistory(emp);
+        const hours  = hist.reduce((s, h) => s + h.hours, 0);
+        const ob     = hist.reduce((s, h) => s + (h.obHours || 0), 0);
+        const ot     = hist.reduce((s, h) => s + (h.otHours || 0), 0);
+        const shifts = hist.length;
+        const gross  = (hours * emp.wage) + (ob * emp.wage * 1.5) + (ot * emp.wage * 0.5);
+        return { name: emp.name, hours, ob, ot, shifts, gross };
+    });
+
+    workers.sort((a, b) => b[metric] - a[metric]);
+
+    if (!workers.length || workers[0][metric] === 0) {
+        list.innerHTML = '<p style="color:var(--text-muted); padding:0.5rem 0; margin:0;">Ingen data för vald period.</p>';
+        return;
+    }
+
+    const medals = ['🥇', '🥈', '🥉'];
+    const fmt = (w) => {
+        if (metric === 'hours')  return w.hours.toFixed(1) + 'h';
+        if (metric === 'ob')     return w.ob.toFixed(1) + 'h';
+        if (metric === 'ot')     return w.ot.toFixed(1) + 'h';
+        if (metric === 'shifts') return w.shifts + (currentLang === 'en' ? ' shifts' : ' pass');
+        return Math.round(w.gross).toLocaleString(locale) + ' kr';
+    };
+
+    list.innerHTML = workers.map((w, i) => {
+        const pct = workers[0][metric] > 0 ? (w[metric] / workers[0][metric]) * 100 : 0;
+        return `<div style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0; border-bottom:1px solid var(--card-border);">
+            <span style="font-size:1.2rem; min-width:2rem; text-align:center;">${medals[i] || (i + 1) + '.'}</span>
+            <div style="flex:1;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+                    <span style="font-weight:600;">${w.name}</span>
+                    <span style="color:#3b82f6; font-weight:700;">${fmt(w)}</span>
+                </div>
+                <div style="height:6px; background:var(--stat-bg); border-radius:3px; overflow:hidden;">
+                    <div style="height:100%; width:${pct.toFixed(1)}%; background:linear-gradient(90deg,#3b82f6,#8b5cf6); border-radius:3px;"></div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ================================================================
+// SCHEMAVARNINGAR (Feature 7)
+// ================================================================
+function renderScheduleWarnings() {
+    const list = document.getElementById('schedule-warnings-list');
+    if (!list) return;
+
+    const today     = new Date();
+    const dow       = (today.getDay() + 6) % 7;           // 0 = Mon
+    const nextMon   = new Date(today);
+    nextMon.setDate(today.getDate() + (7 - dow));
+    nextMon.setHours(0, 0, 0, 0);
+    const nextSun   = new Date(nextMon);
+    nextSun.setDate(nextMon.getDate() + 6);
+
+    const locale    = getLangLocale();
+    const fmtDay    = d => d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+
+    const missing = employees.filter(e => e.role !== 'admin').filter(emp => {
+        return !(emp.schedule || []).some(s => {
+            const d = new Date(s.day);
+            return d >= nextMon && d <= nextSun;
+        });
+    });
+
+    const heading = document.getElementById('schedule-warnings-heading');
+    if (heading) heading.innerText = missing.length
+        ? `📅 Schemavarningar (${missing.length})`
+        : '📅 Schemavarningar';
+
+    if (!missing.length) {
+        list.innerHTML = '<p style="color:#10b981; padding:0.5rem 0; margin:0;">✅ Alla har pass inlagda för nästa vecka.</p>';
+        return;
+    }
+
+    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.83rem; margin:0 0 0.6rem;">
+        Nästa vecka: ${fmtDay(nextMon)} – ${fmtDay(nextSun)}
+    </p>` + missing.map(emp => `
+        <div style="display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0; border-bottom:1px solid var(--card-border);">
+            <span>⚠️</span>
+            <span style="font-weight:600;">${emp.name}</span>
+            <span style="color:var(--text-muted); font-size:0.83rem;">— inga pass inlagda</span>
+        </div>`).join('');
+}
+
+// ================================================================
+// GLOBAL HISTORIK-SÖKNING (Feature 8)
+// ================================================================
+function searchGlobalHistory() {
+    const query = (document.getElementById('global-search-input')?.value || '').trim().toLowerCase();
+    const list  = document.getElementById('global-search-results');
+    if (!list) return;
+
+    const placeholder = currentLang === 'en'
+        ? 'Enter a name, date (YYYY-MM-DD) or comment to search.'
+        : 'Skriv ett namn, datum (ÅÅÅÅ-MM-DD) eller kommentar för att söka.';
+
+    if (!query) {
+        list.innerHTML = `<p style="color:var(--text-muted); padding:0.5rem 0; margin:0;">${placeholder}</p>`;
+        return;
+    }
+
+    const results = [];
+    employees.filter(e => e.role !== 'admin').forEach(emp => {
+        (emp.workedHistory || []).forEach(s => {
+            if (
+                emp.name.toLowerCase().includes(query) ||
+                (s.date || '').includes(query) ||
+                (s.note || '').toLowerCase().includes(query)
+            ) results.push({ emp, s });
+        });
+    });
+
+    results.sort((a, b) => b.s.date.localeCompare(a.s.date));
+
+    const noResults = currentLang === 'en' ? 'No results found.' : 'Inga träffar.';
+    if (!results.length) {
+        list.innerHTML = `<p style="color:var(--text-muted); padding:0.5rem 0; margin:0;">${noResults}</p>`;
+        return;
+    }
+
+    const locale = getLangLocale();
+    list.innerHTML = results.slice(0, 50).map(({ emp, s }) => {
+        const gross = (s.hours * emp.wage) + ((s.obHours || 0) * emp.wage * 1.5) + ((s.otHours || 0) * emp.wage * 0.5);
+        const obStr = (s.obHours || 0) > 0 ? `<span style="color:#8b5cf6;"> +${s.obHours.toFixed(1)}h OB</span>` : '';
+        const otStr = (s.otHours || 0) > 0 ? `<span style="color:#f97316;"> +${s.otHours.toFixed(1)}h ÖT</span>` : '';
+        return `<div style="padding:0.6rem 0; border-bottom:1px solid var(--card-border); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.25rem;">
+            <div>
+                <strong>${emp.name}</strong>
+                <span style="color:var(--text-muted); font-size:0.82rem; margin-left:0.5rem;">${s.date}</span>
+                ${s.note ? `<span style="color:var(--text-muted); font-size:0.82rem; display:block; margin-top:0.15rem;">💬 ${s.note}</span>` : ''}
+            </div>
+            <div style="text-align:right; font-size:0.85rem; flex-shrink:0;">
+                <span style="color:#3b82f6;">${s.hours.toFixed(1)}h</span>${obStr}${otStr}
+                <span style="color:#10b981; font-weight:600; display:block;">${Math.round(gross).toLocaleString(locale)} kr</span>
+            </div>
+        </div>`;
+    }).join('');
+
+    if (results.length > 50) {
+        const more = currentLang === 'en'
+            ? `Showing 50 of ${results.length} results.`
+            : `Visar 50 av ${results.length} träffar.`;
+        list.innerHTML += `<p style="color:var(--text-muted); font-size:0.82rem; padding:0.5rem 0; margin:0;">${more}</p>`;
+    }
 }

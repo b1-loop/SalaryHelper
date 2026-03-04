@@ -324,6 +324,11 @@
                         </div>
 
                         <div class="card">
+                            <h3 id="schedule-warnings-heading">📅 Schemavarningar</h3>
+                            <div id="schedule-warnings-list"></div>
+                        </div>
+
+                        <div class="card">
                             <h3 data-i18n="card_log">⏱️ Aktivitetslogg</h3>
                             <input type="text" id="log-search" class="search-bar" placeholder="Sök i logg..." oninput="renderLogs()" data-i18n-ph="log_search_ph">
                             <ul id="activity-log-list" class="log-list"></ul>
@@ -390,6 +395,30 @@
                         <canvas id="absence-stats-chart"></canvas>
                     </div>
                     <div id="absence-stats-legend" style="margin-top:0.5rem; font-size:0.82rem; text-align:center; color:var(--text-muted);"></div>
+                </div>
+
+                <!-- Anställd-ranking -->
+                <div class="card" id="ranking-card" style="margin-top:1.5rem;">
+                    <h3 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                        <span>🏆 Ranking</span>
+                        <select id="ranking-metric" onchange="renderRanking()" style="padding:0.4rem 0.6rem; border-radius:8px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color); font-size:0.85rem;">
+                            <option value="hours">Vanlig tid</option>
+                            <option value="ob">OB-timmar</option>
+                            <option value="ot">Övertid</option>
+                            <option value="shifts">Antal pass</option>
+                            <option value="gross">Bruttolön</option>
+                        </select>
+                    </h3>
+                    <div id="ranking-list"></div>
+                </div>
+
+                <!-- Global historik-sökning -->
+                <div class="card" style="margin-top:1.5rem;">
+                    <h3>🔍 Sök i all historik</h3>
+                    <input type="text" id="global-search-input" class="search-bar" placeholder="Namn, datum (ÅÅÅÅ-MM-DD) eller kommentar..." oninput="searchGlobalHistory()" style="margin-bottom:0.75rem;">
+                    <div id="global-search-results">
+                        <p style="color:var(--text-muted); padding:0.5rem 0; margin:0;">Skriv ett namn, datum eller kommentar för att söka.</p>
+                    </div>
                 </div>
             </div>
         </div>
