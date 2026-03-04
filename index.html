@@ -53,6 +53,7 @@
 
             <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
                 <div id="network-status" class="network-badge online">🟢 Online</div>
+                <button id="tour-help-btn" class="hidden" onclick="startTour()" style="background: rgba(124,58,237,0.15); color: #a78bfa;">❓ Guide</button>
                 <button id="settings-btn" class="hidden" onclick="openSettingsModal()">⚙️ Inställningar</button>
                 <button onclick="toggleDarkMode()">🌙 Tema</button>
                 <button onclick="logout()" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">Logga ut</button>
@@ -91,7 +92,7 @@
 
                     <div style="margin-top: 1.5rem; display:flex; flex-wrap: wrap; justify-content: center;" id="worker-action-buttons"></div>
 
-                    <div class="stats-grid">
+                    <div class="stats-grid" id="worker-stats-grid">
                         <div class="stat-box"><span>Vanlig Tid</span><strong id="worker-hours">0h</strong></div>
                         <div class="stat-box"><span>OB-Timmar</span><strong id="worker-ob-hours" style="color: #8b5cf6;">0h</strong></div>
                         <div class="stat-box"><span>Övertid</span><strong id="worker-ot-hours" style="color: #f97316;">0h</strong></div>
@@ -207,7 +208,7 @@
                 <h2>Admin Dashboard</h2>
 
                 <!-- Feature 8: Dashboard stats -->
-                <div class="stats-grid" style="margin-bottom:1.5rem;">
+                <div class="stats-grid" id="admin-stats-grid" style="margin-bottom:1.5rem;">
                     <div class="stat-box"><span>Lönekostnad (period)</span><strong id="admin-total-cost">0 kr</strong></div>
                     <div class="stat-box"><span>Inloggade just nu</span><strong id="admin-active-now" style="color:#10b981;">0</strong></div>
                     <div class="stat-box"><span>Snittlön</span><strong id="admin-avg-wage">0 kr/h</strong></div>
@@ -551,6 +552,18 @@
         </div>
     </div>
 
+    <!-- ===== GUIDED TOUR TOOLTIP ===== -->
+    <div id="tour-tooltip" class="hidden">
+        <div id="tour-progress"></div>
+        <h4 id="tour-title" style="margin: 0.25rem 0 0.5rem;"></h4>
+        <p id="tour-text" style="color: var(--text-muted); line-height: 1.55; margin: 0 0 1rem; font-size: 0.88rem;"></p>
+        <div style="display:flex; gap:0.5rem; align-items:center; justify-content:space-between;">
+            <button id="tour-prev-btn" class="btn btn-secondary" style="width:auto; padding:0.4rem 0.9rem; font-size:0.83rem;" onclick="tourPrev()">← Bakåt</button>
+            <button class="btn" style="width:auto; background:none; color:var(--text-muted); font-size:0.8rem; padding:0.4rem 0.6rem; text-decoration:underline;" onclick="endTour()">Hoppa över</button>
+            <button id="tour-next-btn" class="btn btn-primary" style="width:auto; padding:0.4rem 0.9rem; font-size:0.83rem;" onclick="tourNext()">Nästa →</button>
+        </div>
+    </div>
+
     <!-- ===== SCRIPTS ===== -->
     <script src="js/data.js"></script>
     <script src="js/utils.js"></script>
@@ -559,6 +572,7 @@
     <script src="js/admin.js"></script>
     <script src="js/modals.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/tour.js"></script>
 
 </body>
 </html>

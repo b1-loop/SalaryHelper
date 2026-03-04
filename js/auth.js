@@ -56,18 +56,22 @@ function doLogin() {
     document.getElementById('logged-in-user').innerText = `👤 ${currentUser.name}`;
     updateCompanyName();
 
+    document.getElementById('tour-help-btn').classList.remove('hidden');
+
     if (currentUser.role === 'admin') {
         document.getElementById('admin-view').classList.remove('hidden');
         document.getElementById('worker-view').classList.add('hidden');
         document.getElementById('settings-btn').classList.remove('hidden');
         loadAdminData();
         showToast("Inloggad som Admin", "success");
+        autoStartTour();
     } else {
         document.getElementById('worker-view').classList.remove('hidden');
         document.getElementById('admin-view').classList.add('hidden');
         document.getElementById('settings-btn').classList.add('hidden');
         loadWorkerView();
         showToast("Välkommen!", "success");
+        autoStartTour();
         resetInactivityTimer();
 
         if ('Notification' in window) Notification.requestPermission();
@@ -79,11 +83,13 @@ function doLogin() {
 function logout() {
     clearInterval(liveTimerInterval);
     clearTimeout(inactivityTimer);
+    endTour();
     currentUser = null;
     document.getElementById('app-content').classList.add('hidden');
     document.getElementById('login-screen').classList.remove('hidden');
     document.getElementById('login-pin').value = '';
     document.getElementById('pin-error').innerText = '';
+    document.getElementById('tour-help-btn').classList.add('hidden');
     showToast("Utloggad.");
 }
 
