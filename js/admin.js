@@ -21,6 +21,7 @@ function loadAdminData() {
     renderCertWarnings();
     renderAbsenceStats();
     renderSwapRequests();
+    renderAdminMessages();
 
     // Update sort indicators
     ['name', 'hours', 'ob', 'gross'].forEach(col => {
@@ -110,7 +111,7 @@ function addEmployee() {
     if (!name || !pin || isNaN(wage)) return showToast("Fyll i namn, PIN och lön.", "warning");
     if (employees.find(e => e.pin === pin)) return showToast("PIN-koden används redan!", "error");
 
-    employees.push({ id: Date.now().toString(), name, pin, role: "worker", wage, status: "Utloggad", activeSession: null, workedHistory: [], schedule: [], vacationDaysLeft: 25, sickDaysUsed: 0, vacationHistory: [], sickHistory: [], vacationRequests: [], certifications: [], personnummer: '', phone: '', email: '', address: '', postalCode: '', city: '', startDate: '', availability: [], swapRequests: [] });
+    employees.push({ id: Date.now().toString(), name, pin, role: "worker", wage, status: "Utloggad", activeSession: null, workedHistory: [], schedule: [], vacationDaysLeft: 25, sickDaysUsed: 0, vacationHistory: [], sickHistory: [], vacationRequests: [], certifications: [], personnummer: '', phone: '', email: '', address: '', postalCode: '', city: '', startDate: '', availability: [], swapRequests: [], notifications: [] });
     document.getElementById('new-name').value = '';
     document.getElementById('new-pin').value  = '';
     document.getElementById('new-wage').value = '';
@@ -208,6 +209,7 @@ function approveVacationRequest(empId, reqId) {
             emp.vacationHistory.push({ date: ds, comment: req.reason || 'Godkänd ansökan' });
     }
     req.status = 'approved'; req.reviewNote = note; req.reviewedAt = Date.now();
+    _pushNotification(emp, `✅ Din semesteransökan ${req.startDate} – ${req.endDate} godkändes!${note ? ' Admin: "' + note + '"' : ''}`);
     addLog(`Godkände semesteransökan för ${emp.name}: ${req.startDate} – ${req.endDate}`);
     saveData(); loadAdminData();
     showToast(`Ansökan godkänd! ${req.days} semesterdagar dragna från ${emp.name}s saldo.`, 'success');
@@ -220,6 +222,7 @@ function rejectVacationRequest(empId, reqId) {
     if (!req) return;
     const note = document.getElementById(`review-note-${reqId}`)?.value.trim() || '';
     req.status = 'rejected'; req.reviewNote = note; req.reviewedAt = Date.now();
+    _pushNotification(emp, `❌ Din semesteransökan ${req.startDate} – ${req.endDate} nekades.${note ? ' Admin: "' + note + '"' : ''}`);
     addLog(`Nekade semesteransökan för ${emp.name}: ${req.startDate} – ${req.endDate}`);
     saveData(); loadAdminData();
     showToast(`Ansökan nekad.`, 'warning');
@@ -531,6 +534,7 @@ function approveSwapRequest(empId, reqId) {
     target.schedule.push({ day: req.myShift.day, time: req.myShift.time });
 
     req.status = 'approved'; req.reviewedAt = Date.now();
+    _pushNotification(emp, `✅ Ditt skiftbyte godkändes! Passet ${req.myShift.day} ${req.myShift.time} har getts till ${target.name}.`);
     addLog(`Godkände skiftbyte: ${emp.name}s pass ${req.myShift.day} → ${target.name}`);
     saveData(); loadAdminData();
     showToast(`Skiftbyte godkänt! Passet ${req.myShift.day} flyttat till ${target.name}.`, 'success');
@@ -542,7 +546,55 @@ function rejectSwapRequest(empId, reqId) {
     const req = (emp.swapRequests || []).find(r => r.id === reqId);
     if (!req) return;
     req.status = 'rejected'; req.reviewedAt = Date.now();
+    _pushNotification(emp, `❌ Ditt skiftbyte (${req.myShift.day} ${req.myShift.time}) nekades.`);
     addLog(`Nekade skiftbyte för ${emp.name}: ${req.myShift.day}`);
     saveData(); loadAdminData();
     showToast('Skiftbyte nekat.', 'warning');
+}
+
+// ================================================================
+// MEDDELANDEN FRÅN ANSTÄLLDA (Feature 4)
+// ================================================================
+function renderAdminMessages() {
+    const list = document.getElementById('admin-messages-list');
+    if (!list) return;
+
+    const unread = adminMessages.filter(m => !m.read).length;
+    const heading = document.getElementById('admin-messages-heading');
+    if (heading) heading.innerText = `💬 Meddelanden${unread ? ` (${unread} olästa)` : ''}`;
+
+    if (!adminMessages.length) {
+        list.innerHTML = '<p style="color:var(--text-muted); padding:0.5rem 0; margin:0;">Inga meddelanden ännu.</p>';
+        return;
+    }
+
+    const sorted = [...adminMessages].sort((a, b) => b.createdAt - a.createdAt).slice(0, 30);
+    list.innerHTML = sorted.map(m => {
+        const date = new Date(m.createdAt).toLocaleString('sv-SE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return `<div style="padding:0.65rem 0; border-bottom:1px solid var(--card-border); ${m.read ? '' : 'background:rgba(59,130,246,0.05); border-radius:6px; padding:0.65rem 0.5rem;'}">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem; flex-wrap:wrap; gap:0.25rem;">
+                <strong style="${m.read ? 'color:var(--text-muted);' : 'color:#3b82f6;'}">${m.fromEmpName}</strong>
+                <span style="font-size:0.75rem; color:var(--text-muted);">${date}${m.read ? '' : ' 🔵'}</span>
+            </div>
+            <p style="margin:0; font-size:0.88rem; line-height:1.45;">${m.text}</p>
+        </div>`;
+    }).join('');
+
+    if (unread) {
+        list.innerHTML += `<button class="btn btn-secondary" style="margin-top:0.75rem; width:auto; font-size:0.82rem;" onclick="markAllMessagesRead()">✓ Markera alla som lästa</button>`;
+    }
+}
+
+function markAllMessagesRead() {
+    adminMessages.forEach(m => m.read = true);
+    saveData();
+    renderAdminMessages();
+}
+
+// ================================================================
+// NOTISER (helper used by approve/reject functions)
+// ================================================================
+function _pushNotification(emp, text) {
+    if (!emp.notifications) emp.notifications = [];
+    emp.notifications.push({ id: Date.now().toString(), text, createdAt: Date.now(), read: false });
 }

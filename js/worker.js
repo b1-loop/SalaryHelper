@@ -129,6 +129,7 @@ function loadWorkerView() {
     renderAvailabilityList();
     renderMySwapRequests();
     populateSwapForm();
+    showPendingNotifications();
 }
 
 function renderWorkerChart() {
@@ -708,4 +709,41 @@ function renderMySwapRequests() {
             <span style="font-size:0.85rem;">${r.myShift.day} ${r.myShift.time} → ${r.targetEmpName}</span>
             <span style="color:${statusColor[r.status]}; font-weight:700; font-size:0.8rem;">${statusLabel[r.status]}</span>
         </div>`).join('');
+}
+
+// ================================================================
+// MEDDELANDE TILL ADMIN (Feature 4)
+// ================================================================
+function sendMessage() {
+    const input = document.getElementById('message-input');
+    const text  = (input?.value || '').trim();
+    if (!text) return showToast('Skriv ett meddelande först', 'warning');
+    if (text.length > 500) return showToast('Max 500 tecken', 'warning');
+
+    adminMessages.push({
+        id: Date.now().toString(),
+        fromEmpId: currentUser.id,
+        fromEmpName: currentUser.name,
+        text,
+        createdAt: Date.now(),
+        read: false
+    });
+
+    input.value = '';
+    saveData();
+    showToast('Meddelande skickat till admin! 📨', 'success');
+}
+
+// ================================================================
+// NOTISER VID INLOGGNING (Feature 5)
+// ================================================================
+function showPendingNotifications() {
+    const unread = (currentUser.notifications || []).filter(n => !n.read);
+    if (!unread.length) return;
+
+    unread.forEach((n, i) => {
+        setTimeout(() => showToast(n.text, n.text.startsWith('✅') ? 'success' : 'warning'), i * 600);
+        n.read = true;
+    });
+    saveData();
 }

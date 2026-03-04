@@ -4,6 +4,7 @@
 const DB_KEY       = 'timetrack_pro_v3';
 const LOGS_KEY     = 'timetrack_logs_v3';
 const PAYSLIPS_KEY = 'tt_payslips';
+const MESSAGES_KEY = 'tt_messages';
 
 const defaultEmployees = [
     { id: "1", name: "Admin",          pin: "9999", role: "admin",   wage: 0,   status: "Utloggad", activeSession: null, workedHistory: [], schedule: [],                                                    vacationDaysLeft: 25, sickDaysUsed: 0 },
@@ -20,6 +21,7 @@ const shownReminders  = new Set();
 let inactivityTimer   = null;
 const INACTIVITY_MS   = 15 * 60 * 1000; // 15 minutes
 let savedPayslips     = JSON.parse(localStorage.getItem(PAYSLIPS_KEY)) || [];
+let adminMessages     = JSON.parse(localStorage.getItem(MESSAGES_KEY)) || [];
 
 // Migrate existing employees — add new fields if missing
 employees.forEach(emp => {
@@ -41,6 +43,7 @@ employees.forEach(emp => {
     if (emp.startDate         === undefined) emp.startDate         = '';
     if (emp.availability      === undefined) emp.availability      = [];
     if (emp.swapRequests      === undefined) emp.swapRequests      = [];
+    if (emp.notifications     === undefined) emp.notifications     = [];
     emp.workedHistory.forEach(s => {
         if (s.otHours      === undefined) s.otHours      = 0;
         if (s.breakMinutes === undefined) s.breakMinutes = 0;
@@ -49,6 +52,7 @@ employees.forEach(emp => {
 });
 
 function saveData() {
-    localStorage.setItem(DB_KEY,   JSON.stringify(employees));
-    localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+    localStorage.setItem(DB_KEY,      JSON.stringify(employees));
+    localStorage.setItem(LOGS_KEY,    JSON.stringify(logs));
+    localStorage.setItem(MESSAGES_KEY, JSON.stringify(adminMessages));
 }
