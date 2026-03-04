@@ -100,6 +100,9 @@ Kräver ingen backend eller databas — allt sparas i webbläsarens `localStorag
 | **Frånvarostatistik** | Donut-diagram som visar totalt antal jobbade pass, sjukdagar och semesterdagar för alla anställda |
 | **Skiftbyten** | Admin ser alla väntande skiftbytesförfrågningar, godkänner (passet flyttas automatiskt i schemat) eller nekar |
 | **Meddelanden från anställda** | Inkorgsvy med alla meddelanden sorterade nyast först — olästa markeras med 🔵 och räknas i rubriken. "Markera alla lästa"-knapp |
+| **Anställd-ranking** | Topplista med progressbars — rangordna anställda efter vanlig tid, OB, övertid, antal pass eller bruttolön. Respekterar perioffiltret. 🥇🥈🥉 för topp 3 |
+| **Schemavarningar** | Visar automatiskt vilka anställda som saknar pass inlagda för nästa vecka — grön ✅ om alla är täckta, annars ⚠️ per person |
+| **Global historik-sökning** | Fritextsökning tvärs alla anställdas arbetshistorik — sök på namn, datum (ÅÅÅÅ-MM-DD) eller sessionkommentar. Visar timmar, OB, övertid och lön per träff |
 
 ---
 
@@ -178,11 +181,14 @@ Ingen byggprocess eller Node.js behövs.
 30. **Notiser** — Godkänn en ansökan som admin, logga sedan in som worker och visa att toasten visas direkt.
 31. **Veckorapport** — Visa "Veckorapport"-kortet i arbetar-vyn, bläddra bakåt med ◀ och visa dagsvisa timmar.
 32. **Flerspråkigt** — Klicka 🇬🇧 EN i navigeringen och visa att hela gränssnittet växlar till engelska. Klicka 🇸🇪 SV för att återgå.
-33. **Historikvy** — Klicka *Historik* bredvid en anställd. Visa månadsgruppering, frånvarohistorik med kommentarer och månadsdiagrammet.
-34. **Exportera** — Visa de tre CSV-exportknapparna: löneöversikt, all historik, personalregister (inkl. anst.datum).
-35. **Inställningar** — Visa lönedatum, OB-tider, övertidsgräns och företagsnamn.
-36. **Backup** — Klicka *Ladda ner backup* och visa den nedladdade JSON-filen.
-37. **Offline** — Stäng av WiFi och visa att indikatorn byter till 🔴 Offline utan att appen slutar fungera.
+33. **Ranking** — Visa rankingkortet, byt dropdown till "Övertid" och visa hur ordningen ändras med progressbars.
+34. **Schemavarningar** — Visa varningskortet och notera vilka anställda som saknar pass för nästa vecka.
+35. **Global sökning** — Scrolla till sökkortet, skriv ett namn eller datum och visa träffarna med timmar och lön.
+36. **Historikvy** — Klicka *Historik* bredvid en anställd. Visa månadsgruppering, frånvarohistorik med kommentarer och månadsdiagrammet.
+37. **Exportera** — Visa de tre CSV-exportknapparna: löneöversikt, all historik, personalregister (inkl. anst.datum).
+38. **Inställningar** — Visa lönedatum, OB-tider, övertidsgräns och företagsnamn.
+39. **Backup** — Klicka *Ladda ner backup* och visa den nedladdade JSON-filen.
+40. **Offline** — Stäng av WiFi och visa att indikatorn byter till 🔴 Offline utan att appen slutar fungera.
 
 ---
 
