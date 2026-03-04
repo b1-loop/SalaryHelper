@@ -52,6 +52,9 @@ Kräver ingen backend eller databas — allt sparas i webbläsarens `localStorag
 | **Lönedag-nedräkning** | "Dagar till lön"-ruta i stats-grid räknar ned till konfigurerat lönedatum. Visar 🎉 Idag! på lönedagen |
 | **Anställningsinformation** | Visar anställningsdatum och beräknad tjänstetid (X år Y mån) i ett eget kort |
 | **Mina certifikat** | Anställda ser sina certifikat och kompetenser (registrerade av admin) med utgångsdatum och färgkodad status |
+| **Tillgänglighetsmarkering** | Markera dagar du kan jobba men inte är schemalagd — visas för admin i planeringskalendern som ✋-markeringar |
+| **Skiftbyte** | Välj ett kommande pass och en kollega och skicka en bytesförfrågan — admin godkänner och passet flyttas automatiskt |
+| **Interaktiv guide** | ❓ Guide-knapp i navigeringen startar en steg-för-steg genomgång av alla funktioner — startar automatiskt vid första inloggning |
 
 ---
 
@@ -65,7 +68,7 @@ Kräver ingen backend eller databas — allt sparas i webbläsarens `localStorag
 | **Sorterbar lönetabell** | Klicka på kolumnrubriker (Anställd, Vanlig tid, OB, Bruttolön) för att sortera stigande/fallande |
 | **Sök anställda** | Fritextsök i lönetabellen |
 | **Övertidsrapport** | Horisontellt stapeldiagram per anställd sorterat efter övertidstimmar — färgkodat (gul/orange/röd) efter allvarlighetsgrad, respekterar periofiltret |
-| **Semesterplanering** | Delad månadskalender som visar alla anställdas schemalagda pass (blå), semesterdagar (grön 🏖️) och sjukdagar (röd 🤒) — navigera med ◀ ▶ |
+| **Semesterplanering** | Delad månadskalender som visar alla anställdas schemalagda pass (blå), semesterdagar (grön 🏖️), sjukdagar (röd 🤒) och tillgänglighetsmarkeringar (gul ✋) — navigera med ◀ ▶ |
 | **Personalhantering** | Lägg till, redigera (namn, PIN, timlön, semesterdagar) och radera anställda |
 | **Bekräftelsedialog** | Alla destruktiva åtgärder kräver bekräftelse via en anpassad modal — ingen `window.confirm()` |
 | **Schema vs. faktisk tid** | I redigeringsmodalen visas jobbad tid bredvid schemalagd tid: `08:00–16:00 \| Jobbade: 7,5h (−0,5h)` |
@@ -91,6 +94,8 @@ Kräver ingen backend eller databas — allt sparas i webbläsarens `localStorag
 | **Företagsnamn** | Ange företagsnamn under ⚙️ Inställningar — visas i navigeringen och på lönespecen |
 | **Lönespecifikationshistorik** | Varje gång en lönespec öppnas sparas en snapshot automatiskt — admin ser alla under ⚙️ Inställningar |
 | **Säkerhetskopiering** | Ladda ner hela databasen (anställda, historik, loggar, lönespecar) som JSON, eller återställ från backup |
+| **Frånvarostatistik** | Donut-diagram som visar totalt antal jobbade pass, sjukdagar och semesterdagar för alla anställda |
+| **Skiftbyten** | Admin ser alla väntande skiftbytesförfrågningar, godkänner (passet flyttas automatiskt i schemat) eller nekar |
 
 ---
 
@@ -107,6 +112,7 @@ Kräver ingen backend eller databas — allt sparas i webbläsarens `localStorag
 | **Offline-indikator** | Visar 🟢 Online / 🔴 Offline i navigeringen i realtid |
 | **Toast-notiser** | Animerade notiser för all feedback — inga webbläsar-popups |
 | **Levande klocka** | Systemtid uppdateras varje sekund |
+| **Interaktiv guide** | 4-panelsspotlight med steg-för-steg tooltip — 6 steg för anställda, 8 för admin. Auto-start vid första inloggning, manuell start via ❓ Guide i navigeringen |
 
 ---
 
@@ -150,20 +156,24 @@ Ingen byggprocess eller Node.js behövs.
 13. **Friskanmäl** — Klicka *Sjuk*, visa bekräftelse-prompten, sedan visa att "✅ Friskanmäl dig"-knappen visas och återställer statusen.
 14. **Semesteransökan** — Scrolla till ansökningskortet, fyll i datum och anledning och skicka in.
 15. **Certifikat** — Visa det egna certifikat-kortet med färgkodad statusindikator.
-16. **Byt PIN** — Scrolla till profilkortet och visa PIN-bytesformuläret.
-17. **Admin-vy** — Logga ut och logga in som Admin (`9999`).
-18. **Inloggningsmeddelande** — Öppna ⚙️ Inställningar, skriv ett meddelande, spara. Logga in som worker och visa bannern.
-19. **Dashboard-statistik** — Visa de fyra statistikrutorna längst upp.
-20. **Semesteransökningar** — Visa kortet med väntande ansökningar, godkänn en med kommentar.
-21. **Certifikat-varningar** — Visa varningskortet för certifikat som snart löper ut.
-22. **Löneperiod** — Byt filter till *Denna månad* och visa hur totalsiffrorna ändras.
-23. **Övertidsrapport** — Visa stapeldiagrammet med övertid per anställd.
-24. **Semesterplanering** — Scrolla till kalenderkortet och navigera mellan månader.
-25. **Historikvy** — Klicka *Historik* bredvid en anställd. Visa månadsgruppering, frånvarohistorik med kommentarer och månadsdiagrammet.
-26. **Exportera** — Visa de tre CSV-exportknapparna: löneöversikt, all historik, personalregister (inkl. anst.datum).
-27. **Inställningar** — Visa lönedatum, OB-tider, övertidsgräns och företagsnamn.
-28. **Backup** — Klicka *Ladda ner backup* och visa den nedladdade JSON-filen.
-29. **Offline** — Stäng av WiFi och visa att indikatorn byter till 🔴 Offline utan att appen slutar fungera.
+16. **Tillgänglighet** — Scrolla till "Min Tillgänglighet", lägg till ett datum och visa att det sparas.
+17. **Skiftbyte** — Gå till "Byt Skift", välj ett pass och en kollega och skicka förfrågan.
+18. **Byt PIN** — Scrolla till profilkortet och visa PIN-bytesformuläret.
+19. **Admin-vy** — Logga ut och logga in som Admin (`9999`).
+20. **Inloggningsmeddelande** — Öppna ⚙️ Inställningar, skriv ett meddelande, spara. Logga in som worker och visa bannern.
+21. **Dashboard-statistik** — Visa de fyra statistikrutorna längst upp.
+22. **Semesteransökningar** — Visa kortet med väntande ansökningar, godkänn en med kommentar.
+23. **Skiftbyten** — Visa kortet med väntande skiftbytesförfrågningar och godkänn ett.
+24. **Frånvarostatistik** — Visa donut-diagrammet med jobbade pass, sjukdagar och semesterdagar.
+25. **Certifikat-varningar** — Visa varningskortet för certifikat som snart löper ut.
+26. **Löneperiod** — Byt filter till *Denna månad* och visa hur totalsiffrorna ändras.
+27. **Övertidsrapport** — Visa stapeldiagrammet med övertid per anställd.
+28. **Semesterplanering** — Scrolla till kalenderkortet, navigera månader och visa ✋-markeringar för tillgänglighet.
+29. **Historikvy** — Klicka *Historik* bredvid en anställd. Visa månadsgruppering, frånvarohistorik med kommentarer och månadsdiagrammet.
+30. **Exportera** — Visa de tre CSV-exportknapparna: löneöversikt, all historik, personalregister (inkl. anst.datum).
+31. **Inställningar** — Visa lönedatum, OB-tider, övertidsgräns och företagsnamn.
+32. **Backup** — Klicka *Ladda ner backup* och visa den nedladdade JSON-filen.
+33. **Offline** — Stäng av WiFi och visa att indikatorn byter till 🔴 Offline utan att appen slutar fungera.
 
 ---
 
@@ -189,10 +199,11 @@ js/
   data.js           ← Global state, konstanter, localStorage-nycklar, datamigration
   utils.js          ← showToast, updateClock, aktivitetslogg, toggleDarkMode, nätverksstatus
   calculations.js   ← isOBTime, calculateOBSplit, getTaxBreakdown, getElapsedMs, getFilteredHistory
-  worker.js         ← Arbetar-vy, clockIn/Out, schema, kalender, profil, PIN-byte, semesteransökan, certifikat, frånvaro, lönedag
-  admin.js          ← Admin-dashboard, lönetabell, sortering, övertidsrapport, semesterplanering, certifikat-varningar, semesteransökningar, exportCSV, diagram
+  worker.js         ← Arbetar-vy, clockIn/Out, schema, kalender, profil, PIN-byte, semesteransökan, tillgänglighet, skiftbyte, certifikat, frånvaro, lönedag
+  admin.js          ← Admin-dashboard, lönetabell, sortering, övertidsrapport, semesterplanering, frånvarostatistik, skiftbyten, certifikat-varningar, semesteransökningar, exportCSV, diagram
   modals.js         ← Alla modaler: lönespec, redigera, bekräfta, inställningar, historik, backup, certifikat, mina lönespecar
   auth.js           ← PIN-login, inaktivitetstimeout (15 min), logout
+  tour.js           ← Interaktiv guide med 4-panelsspotlight, separata steg för anställda och admin
 ```
 
 Skripten laddas i rätt ordning i `index.html` (data → utils → calculations → worker → admin → modals → auth) så att alla globala variabler och funktioner finns tillgängliga vid behov. Ingen byggprocess eller bundler krävs — öppna `index.html` direkt i webbläsaren.
