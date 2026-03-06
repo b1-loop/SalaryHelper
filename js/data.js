@@ -53,6 +53,8 @@ employees.forEach(emp => {
     if (emp.emergencyName     === undefined) emp.emergencyName     = '';
     if (emp.emergencyPhone    === undefined) emp.emergencyPhone    = '';
     if (emp.documents         === undefined) emp.documents         = [];
+    if (emp.profilePhoto      === undefined) emp.profilePhoto      = '';
+    if (emp.salaryPayments    === undefined) emp.salaryPayments    = [];
     emp.workedHistory.forEach(s => {
         if (s.otHours      === undefined) s.otHours      = 0;
         if (s.breakMinutes === undefined) s.breakMinutes = 0;

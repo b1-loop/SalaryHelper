@@ -25,6 +25,11 @@ function loadAdminData() {
     renderRanking();
     renderScheduleWarnings();
 
+    if (!sessionStorage.getItem('tt_anniversaries_checked')) {
+        sessionStorage.setItem('tt_anniversaries_checked', '1');
+        checkAnniversaries();
+    }
+
     // Update sort indicators
     ['name', 'hours', 'ob', 'gross'].forEach(col => {
         const el = document.getElementById(`sort-${col}`);
@@ -62,8 +67,14 @@ function loadAdminData() {
         chartRegularPay.push(regPay);
         chartOBPay.push(obPay);
 
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const isPaid       = (emp.salaryPayments || []).some(p => p.month === currentMonth);
+        const avatarHtml   = emp.profilePhoto
+            ? `<img src="${emp.profilePhoto}" style="width:30px; height:30px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:0.4rem;">`
+            : '';
+
         tbody.innerHTML += `<tr class="employee-row">
-            <td class="emp-name"><strong class="clickable-name" onclick="openEditModal('${emp.id}')">${emp.name}</strong><br><small style="color:var(--text-muted)">${emp.wage} kr/h${emp.department ? ` · ${emp.department}` : ''}${emp.position ? ` · ${emp.position}` : ''}</small>${emp.lastLogin ? `<br><small style="color:var(--text-muted)">🕐 ${new Date(emp.lastLogin).toLocaleDateString(getLangLocale(), { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}</small>` : ''}</td>
+            <td class="emp-name">${avatarHtml}<strong class="clickable-name" onclick="openEditModal('${emp.id}')">${emp.name}</strong><br><small style="color:var(--text-muted)">${emp.wage} kr/h${emp.department ? ` · ${emp.department}` : ''}${emp.position ? ` · ${emp.position}` : ''}</small>${emp.lastLogin ? `<br><small style="color:var(--text-muted)">🕐 ${new Date(emp.lastLogin).toLocaleDateString(getLangLocale(), { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}</small>` : ''}</td>
             <td><span class="badge ${emp.status.toLowerCase()}">${emp.status}</span></td>
             <td>${totHrs.toFixed(2)}h</td>
             <td style="color: #8b5cf6; font-weight:bold;">${obHrs.toFixed(2)}h</td>
@@ -71,6 +82,7 @@ function loadAdminData() {
             <td>
                 <button class="btn-sm btn-edit"   onclick="openEditModal('${emp.id}')">Redigera</button>
                 <button class="btn-sm" style="background:#10b981;" onclick="openHistoryModal('${emp.id}')">Historik</button>
+                <button class="btn-sm" style="background:${isPaid ? '#10b981' : '#f59e0b'};" onclick="${isPaid ? '' : `markSalaryPaid('${emp.id}')`}" ${isPaid ? 'disabled title="Lön utbetald denna månad"' : 'title="Markera lön utbetald"'}>${isPaid ? '✅' : '💰'}</button>
                 <button class="btn-sm btn-delete" onclick="deleteEmployee('${emp.id}')">✖</button>
             </td>
         </tr>`;
@@ -113,7 +125,7 @@ function addEmployee() {
     if (!name || !pin || isNaN(wage)) return showToast("Fyll i namn, PIN och lön.", "warning");
     if (employees.find(e => e.pin === pin)) return showToast("PIN-koden används redan!", "error");
 
-    employees.push({ id: Date.now().toString(), name, pin, role: "worker", wage, status: "Utloggad", activeSession: null, workedHistory: [], schedule: [], vacationDaysLeft: 25, sickDaysUsed: 0, vacationHistory: [], sickHistory: [], vacationRequests: [], certifications: [], personnummer: '', phone: '', email: '', address: '', postalCode: '', city: '', startDate: '', availability: [], swapRequests: [], notifications: [], emergencyName: '', emergencyPhone: '', documents: [] });
+    employees.push({ id: Date.now().toString(), name, pin, role: "worker", wage, status: "Utloggad", activeSession: null, workedHistory: [], schedule: [], vacationDaysLeft: 25, sickDaysUsed: 0, vacationHistory: [], sickHistory: [], vacationRequests: [], certifications: [], personnummer: '', phone: '', email: '', address: '', postalCode: '', city: '', startDate: '', availability: [], swapRequests: [], notifications: [], emergencyName: '', emergencyPhone: '', documents: [], profilePhoto: '', salaryPayments: [] });
     document.getElementById('new-name').value = '';
     document.getElementById('new-pin').value  = '';
     document.getElementById('new-wage').value = '';
@@ -433,6 +445,53 @@ function exportScheduleCSV() {
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
     showToast('Schema exporterat!', 'success');
     addLog('Exporterade schema som CSV');
+}
+
+// ================================================================
+// LÖNEUTBETALNING
+// ================================================================
+function markSalaryPaid(empId) {
+    const emp          = employees.find(e => e.id === empId);
+    if (!emp) return;
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    if ((emp.salaryPayments || []).some(p => p.month === currentMonth)) return;
+    if (!emp.salaryPayments) emp.salaryPayments = [];
+    emp.salaryPayments.push({ month: currentMonth, paidAt: new Date().toISOString().slice(0, 10) });
+    emp.notifications.push({ text: `💰 Din lön för ${currentMonth} har betalats ut!`, read: false });
+    saveData();
+    loadAdminData();
+    showToast(`Lön markerad som utbetald för ${emp.name}!`, 'success');
+}
+
+// ================================================================
+// JUBILEUMSNOTISER
+// ================================================================
+function checkAnniversaries() {
+    const today    = new Date().toISOString().slice(0, 10);
+    const monthDay = today.slice(5); // "MM-DD"
+
+    employees.filter(e => e.role !== 'admin').forEach((emp, i) => {
+        const delay = i * 800;
+
+        // Födelsedag från personnummer (YYMMDD-XXXX eller YYYYMMDD-XXXX)
+        if (emp.personnummer) {
+            const clean = emp.personnummer.replace(/[-\s]/g, '');
+            let pnrMonthDay = null;
+            if (clean.length >= 10) pnrMonthDay = `${clean.slice(2, 4)}-${clean.slice(4, 6)}`;
+            else if (clean.length >= 12) pnrMonthDay = `${clean.slice(4, 6)}-${clean.slice(6, 8)}`;
+            if (pnrMonthDay === monthDay) {
+                setTimeout(() => showToast(`🎂 Det är ${emp.name}s födelsedag idag!`, 'success'), delay);
+            }
+        }
+
+        // Arbetsdag-jubileum
+        if (emp.startDate && emp.startDate.slice(5) === monthDay) {
+            const years = new Date().getFullYear() - parseInt(emp.startDate.slice(0, 4));
+            if (years > 0) {
+                setTimeout(() => showToast(`🎉 ${emp.name} har jobbat här i ${years} år idag!`, 'success'), delay + 400);
+            }
+        }
+    });
 }
 
 // ================================================================

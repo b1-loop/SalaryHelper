@@ -112,6 +112,8 @@ function openEditModal(id) {
     document.getElementById('edit-city').value              = emp.city            || '';
     document.getElementById('edit-emergency-name').value    = emp.emergencyName   || '';
     document.getElementById('edit-emergency-phone').value   = emp.emergencyPhone  || '';
+    const editAvatar = document.getElementById('edit-avatar');
+    if (editAvatar) editAvatar.src = emp.profilePhoto || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234b5563'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%239ca3af'/%3E%3Cellipse cx='50' cy='80' rx='28' ry='20' fill='%239ca3af'/%3E%3C/svg%3E";
     renderModalSchedule(id);
     renderModalCertifications(id);
     renderModalDocuments(id);
@@ -872,6 +874,27 @@ function downloadBackup() {
     a.click();
     URL.revokeObjectURL(url);
     showToast('Backup nedladdad!', 'success');
+}
+
+// ================================================================
+// PROFILBILD (admin edit modal)
+// ================================================================
+function uploadEditPhoto(input) {
+    const id   = document.getElementById('edit-emp-id').value;
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) return showToast('Bilden är för stor (max 500 KB).', 'error');
+    const emp    = employees.find(e => e.id === id);
+    const reader = new FileReader();
+    reader.onload = ev => {
+        emp.profilePhoto = ev.target.result;
+        const avatarEl   = document.getElementById('edit-avatar');
+        if (avatarEl) avatarEl.src = emp.profilePhoto;
+        saveData();
+        loadAdminData();
+        showToast('Profilbild sparad!', 'success');
+    };
+    reader.readAsDataURL(file);
 }
 
 // ================================================================

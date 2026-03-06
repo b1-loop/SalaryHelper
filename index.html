@@ -102,6 +102,7 @@
                         <div class="stat-box"><span data-i18n="stat_sick">Sjukdagar</span><strong id="worker-sick-days" style="color: #ef4444;">0</strong></div>
                         <div class="stat-box"><span>VAB-dagar</span><strong id="worker-vab-days" style="color: #f97316;">0</strong></div>
                         <div class="stat-box"><span data-i18n="stat_payday">Dagar till lön</span><strong id="worker-payday-countdown" style="color:#f59e0b;">—</strong></div>
+                        <div class="stat-box"><span>Lönestatus</span><strong id="worker-salary-status" style="color:#f59e0b;">—</strong></div>
                     </div>
 
                     <!-- Feature 1: Inkomstgraf -->
@@ -161,6 +162,17 @@
                 <div class="card">
                     <h3 data-i18n="card_profile">👤 Min Profil</h3>
                     <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0; margin-bottom:1rem;" data-i18n="profile_desc">Din personliga information — visas för admin.</p>
+                    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem;">
+                        <div style="position:relative; width:68px; height:68px; flex-shrink:0;">
+                            <img id="profile-avatar" style="width:68px; height:68px; border-radius:50%; object-fit:cover; border:2px solid var(--card-border);">
+                            <label for="profile-photo-input" style="position:absolute; bottom:0; right:0; background:#3b82f6; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.65rem;" title="Byt foto">📷</label>
+                            <input type="file" id="profile-photo-input" accept="image/*" style="display:none;" onchange="uploadProfilePhoto(this)">
+                        </div>
+                        <div>
+                            <strong id="profile-name-display" style="font-size:1rem;"></strong>
+                            <p style="color:var(--text-muted); font-size:0.78rem; margin:0.2rem 0 0;">Klicka på 📷 för att byta foto</p>
+                        </div>
+                    </div>
                     <div style="display:flex; gap:1rem; flex-wrap:wrap;">
                         <div class="form-group" style="flex:1; min-width:150px;"><label data-i18n="label_personnummer">Personnummer</label><input type="text" id="profile-personnummer" placeholder="ÅÅMMDD-XXXX" maxlength="13"></div>
                         <div class="form-group" style="flex:1; min-width:140px;"><label data-i18n="label_phone">Telefon</label><input type="tel" id="profile-phone" placeholder="070-XXX XX XX"></div>
@@ -475,6 +487,14 @@
             <button class="modal-close" onclick="closeEditModal()">✖</button>
             <h2 id="edit-modal-title" style="margin-top:0; color: #3b82f6;">Profil & Pass</h2>
             <input type="hidden" id="edit-emp-id">
+
+            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+                <div style="position:relative; width:68px; height:68px; flex-shrink:0;">
+                    <img id="edit-avatar" style="width:68px; height:68px; border-radius:50%; object-fit:cover; border:2px solid var(--card-border);">
+                    <label for="edit-photo-input" style="position:absolute; bottom:0; right:0; background:#3b82f6; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.65rem;" title="Byt foto">📷</label>
+                    <input type="file" id="edit-photo-input" accept="image/*" style="display:none;" onchange="uploadEditPhoto(this)">
+                </div>
+            </div>
 
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 2; min-width: 140px;"><label for="edit-name">Namn</label><input type="text" id="edit-name"></div>

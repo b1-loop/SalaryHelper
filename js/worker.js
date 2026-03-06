@@ -100,6 +100,21 @@ function loadWorkerView() {
         }
     }
 
+    // Profilbild
+    const avatarEl = document.getElementById('profile-avatar');
+    const nameDisp = document.getElementById('profile-name-display');
+    if (avatarEl) avatarEl.src = currentUser.profilePhoto || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%234b5563'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%239ca3af'/%3E%3Cellipse cx='50' cy='80' rx='28' ry='20' fill='%239ca3af'/%3E%3C/svg%3E";
+    if (nameDisp) nameDisp.innerText = currentUser.name;
+
+    // Lönestatus
+    const salaryEl = document.getElementById('worker-salary-status');
+    if (salaryEl) {
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const paid         = (currentUser.salaryPayments || []).find(p => p.month === currentMonth);
+        if (paid) { salaryEl.innerText = '✅ Utbetald'; salaryEl.style.color = '#10b981'; }
+        else      { salaryEl.innerText = '⏳ Ej utbetald'; salaryEl.style.color = '#f59e0b'; }
+    }
+
     // Dokument (read-only för anställd)
     const docList = document.getElementById('worker-doc-list');
     if (docList) {
@@ -160,6 +175,7 @@ function loadWorkerView() {
     renderIncomingSwapRequests();
     populateSwapForm();
     showPendingNotifications();
+    checkLoginShiftReminder();
 }
 
 function renderWorkerChart() {
@@ -564,6 +580,39 @@ function copyLastWeekSchedule() {
     });
     if (added > 0) { saveData(); loadWorkerView(); showToast(`${added} pass kopierade till denna vecka!`, 'success'); }
     else showToast('Dessa pass finns redan denna vecka.', 'warning');
+}
+
+function uploadProfilePhoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) return showToast('Bilden är för stor (max 500 KB).', 'error');
+    const reader = new FileReader();
+    reader.onload = ev => {
+        currentUser.profilePhoto = ev.target.result;
+        const avatarEl = document.getElementById('profile-avatar');
+        if (avatarEl) avatarEl.src = currentUser.profilePhoto;
+        saveData();
+        showToast('Profilbild sparad!', 'success');
+    };
+    reader.readAsDataURL(file);
+}
+
+function checkLoginShiftReminder() {
+    if (!currentUser?.schedule?.length) return;
+    const today    = new Date().toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const todayS   = currentUser.schedule.filter(s => s.day === today);
+    const tomorrowS = currentUser.schedule.filter(s => s.day === tomorrow);
+    let delay = 800;
+    if (todayS.length) {
+        const times = todayS.map(s => s.time).join(', ');
+        setTimeout(() => showToast(`📅 Du har pass idag: ${times}`, 'warning'), delay);
+        delay += 1200;
+    }
+    if (tomorrowS.length) {
+        const times = tomorrowS.map(s => s.time).join(', ');
+        setTimeout(() => showToast(`📅 Pass imorgon: ${times}`, 'warning'), delay);
+    }
 }
 
 function saveProfile() {
