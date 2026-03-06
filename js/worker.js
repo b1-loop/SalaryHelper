@@ -216,6 +216,7 @@ function loadWorkerView() {
     renderOpenShifts();
     renderWorkerStatsDashboard();
     scheduleShiftNotifications();
+    renderNotificationCenter();
 }
 
 function renderWorkerChart() {
@@ -1034,13 +1035,58 @@ function sendMessage() {
 // ================================================================
 function showPendingNotifications() {
     const unread = (currentUser.notifications || []).filter(n => !n.read);
-    if (!unread.length) return;
+    if (!unread.length) { renderNotificationCenter(); return; }
 
     unread.forEach((n, i) => {
         setTimeout(() => showToast(n.text, n.text.startsWith('✅') ? 'success' : 'warning'), i * 600);
         n.read = true;
     });
     saveData();
+    renderNotificationCenter();
+}
+
+function renderNotificationCenter() {
+    const list    = document.getElementById('worker-notif-list');
+    const heading = document.getElementById('worker-notif-heading');
+    const badge   = document.getElementById('worker-notif-badge');
+    if (!list) return;
+
+    const notifs  = [...(currentUser.notifications || [])].reverse().slice(0, 30);
+    const unreadN = (currentUser.notifications || []).filter(n => !n.read).length;
+
+    if (heading) heading.textContent = `🔔 Notiser${unreadN ? ` (${unreadN})` : ''}`;
+    if (badge)   { badge.textContent = unreadN; badge.style.display = unreadN ? 'inline' : 'none'; }
+
+    if (!notifs.length) {
+        list.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem; margin:0;">Inga notiser ännu.</p>';
+        return;
+    }
+
+    list.innerHTML = notifs.map(n => {
+        const date = n.createdAt
+            ? new Date(n.createdAt).toLocaleString('sv-SE', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })
+            : '';
+        const isUnread = !n.read;
+        return `<div style="padding:0.6rem ${isUnread ? '0.6rem' : '0'}; border-bottom:1px solid var(--card-border); ${isUnread ? 'border-left:3px solid #3b82f6; background:rgba(59,130,246,0.05); border-radius:0 6px 6px 0;' : ''}">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; flex-wrap:wrap;">
+                <span style="font-size:0.88rem; line-height:1.45; flex:1;">${escapeHtml(n.text)}</span>
+                <span style="font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">${date}${isUnread ? ' 🔵' : ''}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function markAllNotificationsRead() {
+    (currentUser.notifications || []).forEach(n => n.read = true);
+    const emp = employees.find(e => e.id === currentUser.id);
+    if (emp) emp.notifications = currentUser.notifications;
+    saveData();
+    renderNotificationCenter();
+}
+
+function scrollToNotifications() {
+    const el = document.getElementById('worker-notif-card');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ================================================================

@@ -71,6 +71,9 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <h2 id="welcome-message" style="margin: 0;" data-i18n="worker_title">Din stämpelklocka</h2>
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button class="btn btn-secondary" style="width: auto; margin:0; position:relative;" onclick="scrollToNotifications()">
+                            🔔 <span id="worker-notif-badge" style="display:none; background:#ef4444; color:#fff; border-radius:10px; padding:0 5px; font-size:0.7rem; margin-left:2px;"></span>
+                        </button>
                         <button class="btn btn-secondary" style="width: auto; margin:0;" onclick="openMyPayslipsModal()" data-i18n="worker_my_payslips">📋 Mina lönespecar</button>
                         <button class="btn btn-secondary" style="width: auto; margin:0;" onclick="openPayslipModal()" data-i18n="worker_view_payslip">🧾 Visa Lönespecifikation</button>
                     </div>
@@ -289,6 +292,15 @@
                     <div id="my-swap-requests"></div>
                 </div>
 
+                <!-- Notiscenter -->
+                <div class="card" id="worker-notif-card">
+                    <h3 style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+                        <span id="worker-notif-heading">🔔 Notiser</span>
+                        <button class="btn btn-secondary" style="font-size:0.8rem; padding:0.3rem 0.7rem;" onclick="markAllNotificationsRead()">✓ Markera alla lästa</button>
+                    </h3>
+                    <div id="worker-notif-list"></div>
+                </div>
+
                 <!-- Lediga pass från skiftpool -->
                 <div class="card" id="shift-pool-card">
                     <h3>📢 Lediga Pass</h3>
@@ -396,6 +408,15 @@
                                 <button class="btn btn-secondary" style="font-size:0.8rem; padding:0.3rem 0.7rem;" onclick="markAllMessagesRead()" data-i18n="btn_mark_read">Markera alla lästa</button>
                             </h3>
                             <div id="admin-messages-list"></div>
+                            <hr style="margin:1rem 0; border:none; border-top:1px solid var(--card-border);">
+                            <h4 style="margin:0 0 0.6rem; font-size:0.9rem;">📤 Skicka direkt till anställd</h4>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:flex-start;">
+                                <select id="dm-emp-select" style="flex:1; min-width:140px; padding:0.6rem; border-radius:8px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color);">
+                                    <option value="">Välj anställd...</option>
+                                </select>
+                                <textarea id="dm-text" rows="2" style="flex:3; min-width:180px; padding:0.6rem; border-radius:8px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color); font-family:inherit; resize:vertical; box-sizing:border-box;" placeholder="Skriv ett personligt meddelande..."></textarea>
+                                <button class="btn btn-primary" style="width:auto; align-self:flex-end;" onclick="sendDirectMessage()">📤 Skicka</button>
+                            </div>
                         </div>
 
                         <div class="card">

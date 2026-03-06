@@ -173,6 +173,7 @@ function loadAdminData() {
     renderShiftPool();
     renderScheduleWarnings();
     renderLoginStats();
+    populateDirectMessageSelect();
 
     if (!sessionStorage.getItem('tt_anniversaries_checked')) {
         sessionStorage.setItem('tt_anniversaries_checked', '1');
@@ -935,6 +936,27 @@ function scrollToAdminMessages() {
     const el = document.getElementById('admin-messages-heading');
     if (el) el.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     markAllMessagesRead();
+}
+
+function populateDirectMessageSelect() {
+    const sel = document.getElementById('dm-emp-select');
+    if (!sel) return;
+    const workers = employees.filter(e => e.role !== 'admin');
+    sel.innerHTML = '<option value="">Välj anställd...</option>' +
+        workers.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+}
+
+function sendDirectMessage() {
+    const empId = document.getElementById('dm-emp-select').value;
+    const text  = document.getElementById('dm-text').value.trim();
+    const emp   = employees.find(e => e.id === empId);
+    if (!emp)  return showToast('Välj en anställd.', 'warning');
+    if (!text) return showToast('Skriv ett meddelande.', 'warning');
+    _pushNotification(emp, `📩 Meddelande från admin: ${text}`);
+    saveData();
+    document.getElementById('dm-text').value = '';
+    addLog(`Direktmeddelande skickat till ${emp.name}`);
+    showToast(`Meddelande skickat till ${emp.name}!`, 'success');
 }
 
 // ================================================================
