@@ -178,6 +178,9 @@ function loadWorkerView() {
     populateSwapForm();
     showPendingNotifications();
     checkLoginShiftReminder();
+    checkOwnBirthday();
+    renderOpenShifts();
+    renderWorkerStatsDashboard();
 }
 
 function renderWorkerChart() {
@@ -1046,3 +1049,167 @@ function renderWeeklyReport() {
 
 function weekReportPrev() { weekReportOffset--; renderWeeklyReport(); }
 function weekReportNext() { if (weekReportOffset < 0) { weekReportOffset++; renderWeeklyReport(); } }
+
+// ================================================================
+// FÖDELSEDAG-HÄLSNING (för anställd själv)
+// ================================================================
+function checkOwnBirthday() {
+    const pn = currentUser.personnummer;
+    if (!pn || pn.length < 6) return;
+    const today  = new Date();
+    const mm     = String(today.getMonth() + 1).padStart(2, '0');
+    const dd     = String(today.getDate()).padStart(2, '0');
+    const birthMM = pn.slice(2, 4);
+    const birthDD = pn.slice(4, 6);
+    if (mm === birthMM && dd === birthDD) {
+        setTimeout(() => showToast(`🎂 Grattis på födelsedagen, ${currentUser.name.split(' ')[0]}! 🎉`, 'success'), 800);
+    }
+}
+
+// ================================================================
+// SKIFTPOOL — LEDIGA PASS (för anställd)
+// ================================================================
+function renderOpenShifts() {
+    const list = document.getElementById('open-shifts-list');
+    if (!list) return;
+    const pool      = JSON.parse(localStorage.getItem(SHIFT_POOL_KEY) || '[]');
+    const available = pool.filter(s => !s.assignedTo);
+    if (!available.length) {
+        list.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem; margin:0;">Inga lediga pass just nu.</p>';
+        return;
+    }
+    list.innerHTML = available.map(s => {
+        const applied = (s.applicants || []).includes(currentUser.id);
+        return `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--card-border); flex-wrap:wrap; gap:0.5rem;">
+            <div>
+                <strong style="font-size:0.9rem;">${s.date}</strong>
+                <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.5rem;">${s.time}</span>
+                ${s.description ? `<span style="display:block; font-size:0.8rem; color:var(--text-muted);">${s.description}</span>` : ''}
+            </div>
+            <button class="btn-sm ${applied ? 'btn-delete' : 'btn-edit'}" style="font-size:0.8rem;"
+                onclick="${applied ? `cancelShiftApply('${s.id}')` : `applyForShift('${s.id}')`}">
+                ${applied ? '✖ Återkalla' : '✋ Ansök'}
+            </button>
+        </div>`;
+    }).join('');
+}
+
+function applyForShift(shiftId) {
+    const pool  = JSON.parse(localStorage.getItem(SHIFT_POOL_KEY) || '[]');
+    const shift = pool.find(s => s.id === shiftId);
+    if (!shift) return;
+    if (!shift.applicants) shift.applicants = [];
+    if (!shift.applicants.includes(currentUser.id)) shift.applicants.push(currentUser.id);
+    localStorage.setItem(SHIFT_POOL_KEY, JSON.stringify(pool));
+    showToast('Ansökan skickad till admin!', 'success');
+    renderOpenShifts();
+}
+
+function cancelShiftApply(shiftId) {
+    const pool  = JSON.parse(localStorage.getItem(SHIFT_POOL_KEY) || '[]');
+    const shift = pool.find(s => s.id === shiftId);
+    if (!shift) return;
+    shift.applicants = (shift.applicants || []).filter(id => id !== currentUser.id);
+    localStorage.setItem(SHIFT_POOL_KEY, JSON.stringify(pool));
+    showToast('Ansökan återkallad.', 'warning');
+    renderOpenShifts();
+}
+
+// ================================================================
+// ÅTERKOMMANDE VECKOSCHEMA
+// ================================================================
+function addRecurringShifts() {
+    const selected  = [0,1,2,3,4,5,6].filter(i => document.getElementById(`recur-day-${i}`)?.checked);
+    const startTime = document.getElementById('recur-start').value;
+    const endTime   = document.getElementById('recur-end').value;
+    const weeks     = parseInt(document.getElementById('recur-weeks').value) || 4;
+
+    if (!selected.length)     return showToast('Välj minst en veckodag.', 'warning');
+    if (!startTime || !endTime) return showToast('Fyll i start- och sluttid.', 'warning');
+    if (startTime >= endTime)   return showToast('Sluttiden måste vara efter start.', 'error');
+
+    // Find next Monday
+    const today   = new Date();
+    const dow     = today.getDay() || 7;
+    const monday  = new Date(today);
+    monday.setDate(today.getDate() - dow + 1 + 7);
+    monday.setHours(0, 0, 0, 0);
+
+    let added = 0;
+    for (let w = 0; w < weeks; w++) {
+        for (const d of selected) {
+            const date    = new Date(monday);
+            date.setDate(monday.getDate() + w * 7 + d);
+            const dateStr = date.toISOString().slice(0, 10);
+            const time    = `${startTime} - ${endTime}`;
+            if (!currentUser.schedule.some(s => s.day === dateStr && s.time === time)) {
+                currentUser.schedule.push({ day: dateStr, time });
+                added++;
+            }
+        }
+    }
+    saveData(); loadWorkerView();
+    showToast(added ? `${added} pass tillagda!` : 'Inga nya pass (redan inlagda).', added ? 'success' : 'warning');
+}
+
+// ================================================================
+// STATISTIK-DASHBOARD (för anställd)
+// ================================================================
+function getISOWeek(d) {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function renderWorkerStatsDashboard() {
+    const canvas = document.getElementById('worker-weekly-chart');
+    if (!canvas) return;
+
+    const now    = new Date();
+    const weeks  = [];
+    for (let w = 7; w >= 0; w--) {
+        const mon = new Date(now);
+        mon.setDate(now.getDate() - (now.getDay() || 7) + 1 - w * 7);
+        mon.setHours(0, 0, 0, 0);
+        const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+        const monStr = mon.toISOString().slice(0, 10);
+        const sunStr = sun.toISOString().slice(0, 10);
+        const hrs = currentUser.workedHistory
+            .filter(s => s.date >= monStr && s.date <= sunStr)
+            .reduce((sum, s) => sum + s.hours + s.obHours, 0);
+        weeks.push({ label: `v${getISOWeek(mon)}`, hours: hrs });
+    }
+
+    const worked   = weeks.filter(w => w.hours > 0);
+    const avg      = worked.length ? (worked.reduce((s, w) => s + w.hours, 0) / worked.length) : 0;
+    const best     = worked.length ? Math.max(...worked.map(w => w.hours)) : 0;
+    const monthStr = now.toISOString().slice(0, 7);
+    const obMonth  = currentUser.workedHistory.filter(s => s.date.startsWith(monthStr)).reduce((sum, s) => sum + s.obHours, 0);
+    const total    = currentUser.workedHistory.length + (currentUser.sickDaysUsed || 0);
+    const absRate  = total > 0 ? ((currentUser.sickDaysUsed || 0) / total * 100).toFixed(1) : '0.0';
+
+    const el = id => document.getElementById(id);
+    if (el('ws-avg'))  el('ws-avg').innerText  = avg.toFixed(1) + 'h';
+    if (el('ws-best')) el('ws-best').innerText = best.toFixed(1) + 'h';
+    if (el('ws-ob'))   el('ws-ob').innerText   = obMonth.toFixed(2) + 'h';
+    if (el('ws-abs'))  el('ws-abs').innerText  = absRate + '%';
+
+    const dark = document.body.classList.contains('dark-mode');
+    if (window.workerWeeklyChart) window.workerWeeklyChart.destroy();
+    window.workerWeeklyChart = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: weeks.map(w => w.label),
+            datasets: [{ label: 'Timmar', data: weeks.map(w => +w.hours.toFixed(2)), backgroundColor: '#3b82f6', borderRadius: 4 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: dark ? '#94a3b8' : '#64748b' } },
+                y: { border: { display: false }, ticks: { color: dark ? '#94a3b8' : '#64748b' } }
+            }
+        }
+    });
+}

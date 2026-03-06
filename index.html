@@ -10,6 +10,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});</script>
 
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -150,6 +151,34 @@
                         <button class="btn btn-secondary" style="width:auto; margin-top:0;" onclick="addShift()" data-i18n="btn_add">Lägg till</button>
                     </div>
 
+                    <!-- Återkommande veckoschema -->
+                    <hr style="margin:1.5rem 0 1rem; border:none; border-top:1px solid var(--card-border);">
+                    <h4 style="margin:0 0 0.75rem;">🔁 Återkommande schema</h4>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; margin-bottom:0.75rem;">
+                        <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.85rem;"><input type="checkbox" id="recur-day-0"> Mån</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.85rem;"><input type="checkbox" id="recur-day-1"> Tis</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.85rem;"><input type="checkbox" id="recur-day-2"> Ons</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.85rem;"><input type="checkbox" id="recur-day-3"> Tor</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.85rem;"><input type="checkbox" id="recur-day-4"> Fre</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.85rem;"><input type="checkbox" id="recur-day-5"> Lör</label>
+                        <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.85rem;"><input type="checkbox" id="recur-day-6"> Sön</label>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                        <div class="form-group" style="margin-bottom:0; flex:1; min-width:90px;"><label style="font-size:0.8rem;">Start</label><input type="time" id="recur-start"></div>
+                        <div class="form-group" style="margin-bottom:0; flex:1; min-width:90px;"><label style="font-size:0.8rem;">Slut</label><input type="time" id="recur-end"></div>
+                        <div class="form-group" style="margin-bottom:0; flex:1; min-width:90px;">
+                            <label style="font-size:0.8rem;">Antal veckor</label>
+                            <select id="recur-weeks" style="width:100%; padding:0.75rem; border:1px solid var(--input-border); border-radius:8px; background:var(--input-bg); color:var(--text-color);">
+                                <option value="1">1 vecka</option>
+                                <option value="2">2 veckor</option>
+                                <option value="4" selected>4 veckor</option>
+                                <option value="8">8 veckor</option>
+                                <option value="12">12 veckor</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary" style="width:auto; margin-top:1.5rem;" onclick="addRecurringShifts()">🔁 Generera</button>
+                    </div>
+
                     <!-- Feature 9: post-clockout note -->
                     <div id="post-clockout-note" class="hidden"
                     style="margin-top:1.5rem; background:var(--stat-bg); border-radius:8px; border:1px solid var(--card-border); padding:1rem;">
@@ -260,6 +289,13 @@
                     <div id="my-swap-requests"></div>
                 </div>
 
+                <!-- Lediga pass från skiftpool -->
+                <div class="card" id="shift-pool-card">
+                    <h3>📢 Lediga Pass</h3>
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0; margin-bottom:0.75rem;">Admin har lagt ut dessa pass — klicka Ansök för att ta ett.</p>
+                    <div id="open-shifts-list"></div>
+                </div>
+
                 <!-- Meddelande till Admin -->
                 <div class="card" id="message-card">
                     <h3 data-i18n="card_message">💬 Meddelande till Admin</h3>
@@ -298,6 +334,21 @@
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+                </div>
+
+                <!-- Statistik-dashboard -->
+                <div class="card" id="worker-stats-dashboard" style="margin-top:1rem;">
+                    <h3>📊 Min Statistik</h3>
+                    <div class="stats-grid" style="margin-bottom:1.25rem;">
+                        <div class="stat-box"><span>Snitt timmar/vecka</span><strong id="ws-avg" style="color:#3b82f6;">—</strong></div>
+                        <div class="stat-box"><span>Bästa vecka</span><strong id="ws-best" style="color:#10b981;">—</strong></div>
+                        <div class="stat-box"><span>OB denna månad</span><strong id="ws-ob" style="color:#8b5cf6;">—</strong></div>
+                        <div class="stat-box"><span>Frånvarograd</span><strong id="ws-abs" style="color:#ef4444;">—</strong></div>
+                    </div>
+                    <h4 style="margin:0 0 0.6rem; font-size:0.9rem; color:var(--text-muted);">Timmar per vecka (senaste 8 veckorna)</h4>
+                    <div style="position:relative; height:150px;">
+                        <canvas id="worker-weekly-chart"></canvas>
                     </div>
                 </div>
             </div>
@@ -446,6 +497,20 @@
                     <div id="global-search-results">
                         <p style="color:var(--text-muted); padding:0.5rem 0; margin:0;">Skriv ett namn, datum eller kommentar för att söka.</p>
                     </div>
+                </div>
+
+                <!-- Skiftpool -->
+                <div class="card" id="admin-shift-pool" style="margin-top:1.5rem;">
+                    <h3>📢 Skiftpool — Lediga Pass</h3>
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0; margin-bottom:1rem;">Lägg ut pass som anställda kan ansöka om. Klicka på en sökandes namn för att tilldela dem passet.</p>
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+                        <div class="form-group" style="margin-bottom:0; flex:1; min-width:120px;"><label>Datum</label><input type="date" id="pool-date"></div>
+                        <div class="form-group" style="margin-bottom:0; flex:1; min-width:90px;"><label>Start</label><input type="time" id="pool-start"></div>
+                        <div class="form-group" style="margin-bottom:0; flex:1; min-width:90px;"><label>Slut</label><input type="time" id="pool-end"></div>
+                        <div class="form-group" style="margin-bottom:0; flex:2; min-width:160px;"><label>Beskrivning (valfri)</label><input type="text" id="pool-desc" placeholder="T.ex. Kassa, Lager..."></div>
+                        <button class="btn btn-primary" style="width:auto;" onclick="addToShiftPool()">+ Lägg till</button>
+                    </div>
+                    <div id="shift-pool-list" style="margin-top:0.75rem;"></div>
                 </div>
             </div>
         </div>

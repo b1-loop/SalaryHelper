@@ -23,6 +23,7 @@ function loadAdminData() {
     renderSwapRequests();
     renderAdminMessages();
     renderRanking();
+    renderShiftPool();
     renderScheduleWarnings();
 
     if (!sessionStorage.getItem('tt_anniversaries_checked')) {
@@ -966,4 +967,75 @@ function searchGlobalHistory() {
             : `Visar 50 av ${results.length} träffar.`;
         list.innerHTML += `<p style="color:var(--text-muted); font-size:0.82rem; padding:0.5rem 0; margin:0;">${more}</p>`;
     }
+}
+
+// ================================================================
+// SKIFTPOOL — ADMIN
+// ================================================================
+function renderShiftPool() {
+    const container = document.getElementById('shift-pool-list');
+    if (!container) return;
+    const pool = JSON.parse(localStorage.getItem(SHIFT_POOL_KEY) || '[]');
+    if (!pool.length) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem; margin:0.75rem 0 0;">Inga pass i poolen.</p>';
+        return;
+    }
+    container.innerHTML = pool.map(s => {
+        const applicantBtns = (s.applicants || []).map(id => {
+            const emp = employees.find(e => e.id === id);
+            return emp ? `<button class="btn-sm btn-edit" style="font-size:0.75rem; margin:0.2rem 0.2rem 0 0;" onclick="approveShiftApplicant('${s.id}','${id}')">✓ ${emp.name.split(' ')[0]}</button>` : '';
+        }).join('');
+        return `<div style="padding:0.6rem 0; border-bottom:1px solid var(--card-border); display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
+            <div>
+                <strong>${s.date}</strong>
+                <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.5rem;">${s.time}</span>
+                ${s.description ? `<span style="display:block; font-size:0.8rem; color:var(--text-muted);">${s.description}</span>` : ''}
+                <div style="margin-top:0.3rem;">${applicantBtns || '<span style="font-size:0.75rem; color:var(--text-muted);">Inga sökande ännu</span>'}</div>
+            </div>
+            <button class="btn-sm btn-delete" style="font-size:0.75rem;" onclick="removeFromPool('${s.id}')">🗑️</button>
+        </div>`;
+    }).join('');
+}
+
+function addToShiftPool() {
+    const date  = document.getElementById('pool-date').value;
+    const start = document.getElementById('pool-start').value;
+    const end   = document.getElementById('pool-end').value;
+    const desc  = (document.getElementById('pool-desc').value || '').trim();
+    if (!date || !start || !end) return showToast('Fyll i datum och tider.', 'warning');
+    if (start >= end) return showToast('Sluttiden måste vara efter start.', 'error');
+    const pool = JSON.parse(localStorage.getItem(SHIFT_POOL_KEY) || '[]');
+    pool.push({ id: Date.now().toString(), date, time: `${start} - ${end}`, description: desc, applicants: [] });
+    localStorage.setItem(SHIFT_POOL_KEY, JSON.stringify(pool));
+    document.getElementById('pool-date').value  = '';
+    document.getElementById('pool-start').value = '';
+    document.getElementById('pool-end').value   = '';
+    document.getElementById('pool-desc').value  = '';
+    showToast('Pass tillagt i poolen!', 'success');
+    renderShiftPool();
+}
+
+function approveShiftApplicant(shiftId, empId) {
+    const pool  = JSON.parse(localStorage.getItem(SHIFT_POOL_KEY) || '[]');
+    const shift = pool.find(s => s.id === shiftId);
+    const emp   = employees.find(e => e.id === empId);
+    if (!shift || !emp) return;
+    emp.schedule.push({ day: shift.date, time: shift.time });
+    pool.splice(pool.indexOf(shift), 1);
+    localStorage.setItem(SHIFT_POOL_KEY, JSON.stringify(pool));
+    if (!emp.notifications) emp.notifications = [];
+    emp.notifications.push({ type: 'shift_assigned', message: `Du har tilldelats passet ${shift.date} ${shift.time} från skiftpoolen.`, date: new Date().toLocaleDateString('sv-SE'), read: false });
+    saveData();
+    showToast(`Passet tilldelat ${emp.name}!`, 'success');
+    renderShiftPool();
+    loadAdminData();
+}
+
+function removeFromPool(shiftId) {
+    const pool = JSON.parse(localStorage.getItem(SHIFT_POOL_KEY) || '[]');
+    const idx  = pool.findIndex(s => s.id === shiftId);
+    if (idx >= 0) pool.splice(idx, 1);
+    localStorage.setItem(SHIFT_POOL_KEY, JSON.stringify(pool));
+    showToast('Pass borttaget från poolen.', 'warning');
+    renderShiftPool();
 }
