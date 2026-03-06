@@ -67,6 +67,12 @@ function loadAdminData() {
         chartRegularPay.push(regPay);
         chartOBPay.push(obPay);
 
+        const workedDays  = new Set(emp.workedHistory.map(s => s.date)).size;
+        const sickDays    = emp.sickDaysUsed || 0;
+        const totalDays   = workedDays + sickDays;
+        const absenceRate = totalDays > 0 ? (sickDays / totalDays * 100) : 0;
+        const absenceBadge = absenceRate > 0 ? ` · 🤒 ${absenceRate.toFixed(1)}%` : '';
+
         const currentMonth = new Date().toISOString().slice(0, 7);
         const isPaid       = (emp.salaryPayments || []).some(p => p.month === currentMonth);
         const avatarHtml   = emp.profilePhoto
@@ -74,7 +80,7 @@ function loadAdminData() {
             : '';
 
         tbody.innerHTML += `<tr class="employee-row">
-            <td class="emp-name">${avatarHtml}<strong class="clickable-name" onclick="openEditModal('${emp.id}')">${emp.name}</strong><br><small style="color:var(--text-muted)">${emp.wage} kr/h${emp.department ? ` · ${emp.department}` : ''}${emp.position ? ` · ${emp.position}` : ''}${emp.employmentType ? ` · ${emp.employmentType}` : ''}</small>${emp.lastLogin ? `<br><small style="color:var(--text-muted)">🕐 ${new Date(emp.lastLogin).toLocaleDateString(getLangLocale(), { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}</small>` : ''}</td>
+            <td class="emp-name">${avatarHtml}<strong class="clickable-name" onclick="openEditModal('${emp.id}')">${emp.name}</strong><br><small style="color:var(--text-muted)">${emp.wage} kr/h${emp.department ? ` · ${emp.department}` : ''}${emp.position ? ` · ${emp.position}` : ''}${emp.employmentType ? ` · ${emp.employmentType}` : ''}${absenceBadge}</small>${emp.lastLogin ? `<br><small style="color:var(--text-muted)">🕐 ${new Date(emp.lastLogin).toLocaleDateString(getLangLocale(), { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}</small>` : ''}</td>
             <td><span class="badge ${emp.status.toLowerCase()}">${emp.status}</span></td>
             <td>${totHrs.toFixed(2)}h</td>
             <td style="color: #8b5cf6; font-weight:bold;">${obHrs.toFixed(2)}h</td>
@@ -445,6 +451,41 @@ function exportScheduleCSV() {
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
     showToast('Schema exporterat!', 'success');
     addLog('Exporterade schema som CSV');
+}
+
+// ================================================================
+// REALTID: STÄMPLINGSNOTISER
+// ================================================================
+let _clockInLastCheck    = 0;
+let _adminPollingStarted = false;
+
+function initAdminPolling() {
+    _clockInLastCheck = Date.now();
+    if (_adminPollingStarted) return;
+    _adminPollingStarted = true;
+    setInterval(checkClockInEvents, 15000);
+    window.addEventListener('storage', e => {
+        if (e.key === CLOCKIN_KEY) checkClockInEvents();
+    });
+}
+
+function checkClockInEvents() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    const queue = JSON.parse(localStorage.getItem(CLOCKIN_KEY) || '[]');
+    let changed = false;
+    queue.forEach(e => {
+        if (!e.seen && e.time > _clockInLastCheck - 500) {
+            const time = new Date(e.time).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+            showToast(`📍 ${e.empName} stämplade in kl. ${time}`, 'success');
+            e.seen = true;
+            changed = true;
+        }
+    });
+    if (changed) {
+        localStorage.setItem(CLOCKIN_KEY, JSON.stringify(queue));
+        loadAdminData();
+    }
+    _clockInLastCheck = Date.now();
 }
 
 // ================================================================

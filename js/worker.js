@@ -379,6 +379,10 @@ function clockIn() {
         );
     } else { addLog("Stämplade in"); }
 
+    const ciq = JSON.parse(localStorage.getItem(CLOCKIN_KEY) || '[]');
+    ciq.push({ empName: currentUser.name, empId: currentUser.id, time: Date.now(), seen: false });
+    localStorage.setItem(CLOCKIN_KEY, JSON.stringify(ciq.slice(-50)));
+
     saveData(); loadWorkerView(); showToast("Inloggad och tiden går!", "success");
 }
 

@@ -118,6 +118,7 @@ function openEditModal(id) {
     renderModalSchedule(id);
     renderModalCertifications(id);
     renderModalDocuments(id);
+    renderModalTemplates(id);
     document.getElementById('edit-modal').classList.add('active');
 }
 
@@ -299,6 +300,101 @@ function addRecurringShift() {
 
     saveData(); renderModalSchedule(id);
     showToast(`${added} återkommande pass tillagda!`, 'success');
+}
+
+// ================================================================
+// SCHEMAMALLAR
+// ================================================================
+function renderModalTemplates(empId) {
+    const list = document.getElementById('modal-template-list');
+    if (!list) return;
+    const dayNames = ['', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'];
+    if (!scheduleTemplates.length) {
+        list.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem; margin:0;">Inga mallar sparade ännu.</p>';
+        return;
+    }
+    list.innerHTML = scheduleTemplates.map(t => {
+        const desc = t.shifts.map(s => `${dayNames[s.dow]} ${s.start}`).join(', ');
+        return `<div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; padding:0.5rem 0; border-bottom:1px solid var(--card-border); flex-wrap:wrap;">
+            <div style="flex:1; min-width:120px;">
+                <strong style="font-size:0.9rem;">${t.name}</strong>
+                <span style="color:var(--text-muted); font-size:0.75rem; display:block;">${desc}</span>
+            </div>
+            <div style="display:flex; gap:0.4rem; align-items:center; flex-shrink:0;">
+                <select id="tpl-weeks-${t.id}" style="padding:0.35rem; border-radius:6px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color); font-size:0.8rem;">
+                    <option value="2">2 v</option><option value="4" selected>4 v</option>
+                    <option value="8">8 v</option><option value="12">12 v</option>
+                </select>
+                <button class="btn-sm btn-edit" onclick="applyTemplate('${t.id}', '${empId}')">Applicera</button>
+                <button class="btn-sm btn-delete" onclick="deleteTemplate('${t.id}', '${empId}')">✖</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function saveCurrentWeekAsTemplate() {
+    const name = document.getElementById('modal-template-name').value.trim();
+    if (!name) return showToast('Ange ett mallnamn.', 'warning');
+    const id  = document.getElementById('edit-emp-id').value;
+    const emp = employees.find(e => e.id === id);
+
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    let dow = now.getDay(); if (dow === 0) dow = 7;
+    const monday = new Date(now); monday.setDate(now.getDate() - dow + 1);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const fromStr = monday.toISOString().slice(0, 10);
+    const toStr   = sunday.toISOString().slice(0, 10);
+
+    const weekShifts = emp.schedule.filter(s => s.day >= fromStr && s.day <= toStr);
+    if (!weekShifts.length) return showToast('Inga pass denna vecka att spara som mall.', 'warning');
+
+    const shifts = weekShifts.map(s => {
+        let d = new Date(s.day).getDay(); if (d === 0) d = 7;
+        const [start, end] = s.time.split(' - ').map(t => t.trim());
+        return { dow: d, start, end };
+    });
+
+    scheduleTemplates.push({ id: Date.now().toString(), name, shifts });
+    saveData();
+    document.getElementById('modal-template-name').value = '';
+    renderModalTemplates(id);
+    showToast(`Mall "${name}" sparad!`, 'success');
+}
+
+function applyTemplate(templateId, empId) {
+    const template = scheduleTemplates.find(t => t.id === templateId);
+    const emp      = employees.find(e => e.id === empId);
+    if (!template || !emp) return;
+
+    const weeks = parseInt(document.getElementById(`tpl-weeks-${templateId}`)?.value || '4');
+
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    let dow = now.getDay(); if (dow === 0) dow = 7;
+    const nextMonday = new Date(now);
+    nextMonday.setDate(now.getDate() - dow + 1 + 7);
+
+    let added = 0;
+    for (let w = 0; w < weeks; w++) {
+        template.shifts.forEach(shift => {
+            const d = new Date(nextMonday);
+            d.setDate(nextMonday.getDate() + w * 7 + (shift.dow - 1));
+            const dayStr  = d.toISOString().slice(0, 10);
+            const timeStr = `${shift.start} - ${shift.end}`;
+            if (!emp.schedule.some(s => s.day === dayStr && s.time === timeStr)) {
+                emp.schedule.push({ day: dayStr, time: timeStr });
+                added++;
+            }
+        });
+    }
+    saveData(); renderModalSchedule(empId);
+    showToast(`${added} pass tillagda från "${template.name}"!`, 'success');
+}
+
+function deleteTemplate(templateId, empId) {
+    scheduleTemplates = scheduleTemplates.filter(t => t.id !== templateId);
+    saveData();
+    renderModalTemplates(empId);
+    showToast('Mall raderad.', 'success');
 }
 
 // ================================================================

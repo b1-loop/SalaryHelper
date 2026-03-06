@@ -68,6 +68,7 @@ function doLogin() {
         document.getElementById('settings-btn').classList.remove('hidden');
         document.getElementById('msg-nav-btn').classList.remove('hidden');
         loadAdminData();
+        initAdminPolling();
         showToast("Inloggad som Admin", "success");
         autoStartTour();
     } else {

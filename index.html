@@ -598,6 +598,14 @@
                 </select>
                 <button class="btn btn-secondary" style="margin-top:0; width:auto;" onclick="addRecurringShift()">Lägg till</button>
             </div>
+
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--card-border);">
+            <h4 style="margin: 0 0 0.75rem;">📋 Schemamallar</h4>
+            <div id="modal-template-list" style="margin-bottom:0.75rem;"></div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:flex-end;">
+                <div class="form-group" style="flex:2; min-width:150px; margin-bottom:0;"><label>Mallnamn</label><input type="text" id="modal-template-name" placeholder="T.ex. Standardvecka"></div>
+                <button class="btn btn-secondary" style="width:auto; margin-top:0;" onclick="saveCurrentWeekAsTemplate()" title="Sparar passmönstret från innevarande vecka">💾 Spara vecka som mall</button>
+            </div>
         </div>
     </div>
 
