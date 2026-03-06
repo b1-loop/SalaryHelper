@@ -171,6 +171,10 @@
                         <div class="form-group" style="flex:1; min-width:80px;"><label data-i18n="label_postal">Postnummer</label><input type="text" id="profile-postal" placeholder="12345" maxlength="6"></div>
                         <div class="form-group" style="flex:1; min-width:120px;"><label data-i18n="label_city">Stad</label><input type="text" id="profile-city" placeholder="Stockholm"></div>
                     </div>
+                    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                        <div class="form-group" style="flex:2; min-width:180px;"><label data-i18n="label_emergency_name">Nödkontakt (namn)</label><input type="text" id="profile-emergency-name" placeholder="Anna Andersson"></div>
+                        <div class="form-group" style="flex:1; min-width:140px;"><label data-i18n="label_emergency_phone">Nödkontakt (telefon)</label><input type="tel" id="profile-emergency-phone" placeholder="070-XXX XX XX"></div>
+                    </div>
                     <button class="btn btn-primary" style="width:auto;" onclick="saveProfile()" data-i18n="btn_save_profile">💾 Spara profil</button>
 
                     <hr style="margin:1.25rem 0; border:none; border-top:1px solid var(--card-border);">
@@ -493,6 +497,10 @@
                 <div class="form-group" style="flex:2; min-width:180px;"><label>Gatuadress</label><input type="text" id="edit-address" placeholder="Storgatan 1"></div>
                 <div class="form-group" style="flex:1; min-width:80px;"><label>Postnummer</label><input type="text" id="edit-postal" placeholder="12345" maxlength="6"></div>
                 <div class="form-group" style="flex:1; min-width:120px;"><label>Stad</label><input type="text" id="edit-city" placeholder="Stockholm"></div>
+            </div>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                <div class="form-group" style="flex:2; min-width:180px;"><label>Nödkontakt (namn)</label><input type="text" id="edit-emergency-name" placeholder="Anna Andersson"></div>
+                <div class="form-group" style="flex:1; min-width:140px;"><label>Nödkontakt (telefon)</label><input type="tel" id="edit-emergency-phone" placeholder="070-XXX XX XX"></div>
             </div>
 
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">

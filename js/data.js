@@ -50,6 +50,8 @@ employees.forEach(emp => {
     emp.vabHistory = emp.vabHistory.map(e => typeof e === 'string' ? { date: e, comment: '' } : e);
     if (emp.department        === undefined) emp.department        = '';
     if (emp.position          === undefined) emp.position          = '';
+    if (emp.emergencyName     === undefined) emp.emergencyName     = '';
+    if (emp.emergencyPhone    === undefined) emp.emergencyPhone    = '';
     emp.workedHistory.forEach(s => {
         if (s.otHours      === undefined) s.otHours      = 0;
         if (s.breakMinutes === undefined) s.breakMinutes = 0;

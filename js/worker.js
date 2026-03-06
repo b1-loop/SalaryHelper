@@ -111,12 +111,16 @@ function loadWorkerView() {
     const _pa = document.getElementById('profile-address');
     const _po = document.getElementById('profile-postal');
     const _pc = document.getElementById('profile-city');
-    if (_pn) _pn.value = currentUser.personnummer || '';
-    if (_pp) _pp.value = currentUser.phone        || '';
-    if (_pe) _pe.value = currentUser.email        || '';
-    if (_pa) _pa.value = currentUser.address      || '';
-    if (_po) _po.value = currentUser.postalCode   || '';
-    if (_pc) _pc.value = currentUser.city         || '';
+    const _en = document.getElementById('profile-emergency-name');
+    const _ep = document.getElementById('profile-emergency-phone');
+    if (_pn) _pn.value = currentUser.personnummer    || '';
+    if (_pp) _pp.value = currentUser.phone           || '';
+    if (_pe) _pe.value = currentUser.email           || '';
+    if (_pa) _pa.value = currentUser.address         || '';
+    if (_po) _po.value = currentUser.postalCode      || '';
+    if (_pc) _pc.value = currentUser.city            || '';
+    if (_en) _en.value = currentUser.emergencyName   || '';
+    if (_ep) _ep.value = currentUser.emergencyPhone  || '';
 
     // Admin message banner
     const adminMsg   = localStorage.getItem('tt_admin_message');
@@ -549,12 +553,14 @@ function copyLastWeekSchedule() {
 
 function saveProfile() {
     if (!currentUser) return;
-    currentUser.personnummer = (document.getElementById('profile-personnummer')?.value || '').trim();
-    currentUser.phone        = (document.getElementById('profile-phone')?.value        || '').trim();
-    currentUser.email        = (document.getElementById('profile-email')?.value        || '').trim();
-    currentUser.address      = (document.getElementById('profile-address')?.value      || '').trim();
-    currentUser.postalCode   = (document.getElementById('profile-postal')?.value       || '').trim();
-    currentUser.city         = (document.getElementById('profile-city')?.value         || '').trim();
+    currentUser.personnummer   = (document.getElementById('profile-personnummer')?.value    || '').trim();
+    currentUser.phone          = (document.getElementById('profile-phone')?.value          || '').trim();
+    currentUser.email          = (document.getElementById('profile-email')?.value          || '').trim();
+    currentUser.address        = (document.getElementById('profile-address')?.value        || '').trim();
+    currentUser.postalCode     = (document.getElementById('profile-postal')?.value         || '').trim();
+    currentUser.city           = (document.getElementById('profile-city')?.value           || '').trim();
+    currentUser.emergencyName  = (document.getElementById('profile-emergency-name')?.value  || '').trim();
+    currentUser.emergencyPhone = (document.getElementById('profile-emergency-phone')?.value || '').trim();
     saveData();
     showToast('Profil sparad!', 'success');
 }
