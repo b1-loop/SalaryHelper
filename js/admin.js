@@ -74,7 +74,7 @@ function loadAdminData() {
             : '';
 
         tbody.innerHTML += `<tr class="employee-row">
-            <td class="emp-name">${avatarHtml}<strong class="clickable-name" onclick="openEditModal('${emp.id}')">${emp.name}</strong><br><small style="color:var(--text-muted)">${emp.wage} kr/h${emp.department ? ` · ${emp.department}` : ''}${emp.position ? ` · ${emp.position}` : ''}</small>${emp.lastLogin ? `<br><small style="color:var(--text-muted)">🕐 ${new Date(emp.lastLogin).toLocaleDateString(getLangLocale(), { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}</small>` : ''}</td>
+            <td class="emp-name">${avatarHtml}<strong class="clickable-name" onclick="openEditModal('${emp.id}')">${emp.name}</strong><br><small style="color:var(--text-muted)">${emp.wage} kr/h${emp.department ? ` · ${emp.department}` : ''}${emp.position ? ` · ${emp.position}` : ''}${emp.employmentType ? ` · ${emp.employmentType}` : ''}</small>${emp.lastLogin ? `<br><small style="color:var(--text-muted)">🕐 ${new Date(emp.lastLogin).toLocaleDateString(getLangLocale(), { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}</small>` : ''}</td>
             <td><span class="badge ${emp.status.toLowerCase()}">${emp.status}</span></td>
             <td>${totHrs.toFixed(2)}h</td>
             <td style="color: #8b5cf6; font-weight:bold;">${obHrs.toFixed(2)}h</td>
@@ -125,7 +125,7 @@ function addEmployee() {
     if (!name || !pin || isNaN(wage)) return showToast("Fyll i namn, PIN och lön.", "warning");
     if (employees.find(e => e.pin === pin)) return showToast("PIN-koden används redan!", "error");
 
-    employees.push({ id: Date.now().toString(), name, pin, role: "worker", wage, status: "Utloggad", activeSession: null, workedHistory: [], schedule: [], vacationDaysLeft: 25, sickDaysUsed: 0, vacationHistory: [], sickHistory: [], vacationRequests: [], certifications: [], personnummer: '', phone: '', email: '', address: '', postalCode: '', city: '', startDate: '', availability: [], swapRequests: [], notifications: [], emergencyName: '', emergencyPhone: '', documents: [], profilePhoto: '', salaryPayments: [] });
+    employees.push({ id: Date.now().toString(), name, pin, role: "worker", wage, status: "Utloggad", activeSession: null, workedHistory: [], schedule: [], vacationDaysLeft: 25, sickDaysUsed: 0, vacationHistory: [], sickHistory: [], vacationRequests: [], certifications: [], personnummer: '', phone: '', email: '', address: '', postalCode: '', city: '', startDate: '', availability: [], swapRequests: [], notifications: [], emergencyName: '', emergencyPhone: '', documents: [], profilePhoto: '', salaryPayments: [], employmentType: '' });
     document.getElementById('new-name').value = '';
     document.getElementById('new-pin').value  = '';
     document.getElementById('new-wage').value = '';
@@ -675,6 +675,8 @@ function renderAdminMessages() {
     const unread = adminMessages.filter(m => !m.read).length;
     const heading = document.getElementById('admin-messages-heading');
     if (heading) heading.innerText = `💬 Meddelanden${unread ? ` (${unread} olästa)` : ''}`;
+    const badge = document.getElementById('msg-nav-count');
+    if (badge) { badge.innerText = unread; badge.style.display = unread ? 'inline' : 'none'; }
 
     if (!adminMessages.length) {
         list.innerHTML = '<p style="color:var(--text-muted); padding:0.5rem 0; margin:0;">Inga meddelanden ännu.</p>';
@@ -702,6 +704,12 @@ function markAllMessagesRead() {
     adminMessages.forEach(m => m.read = true);
     saveData();
     renderAdminMessages();
+}
+
+function scrollToAdminMessages() {
+    const el = document.getElementById('admin-messages-heading');
+    if (el) el.closest('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    markAllMessagesRead();
 }
 
 // ================================================================

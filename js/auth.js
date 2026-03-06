@@ -66,6 +66,7 @@ function doLogin() {
         document.getElementById('admin-view').classList.remove('hidden');
         document.getElementById('worker-view').classList.add('hidden');
         document.getElementById('settings-btn').classList.remove('hidden');
+        document.getElementById('msg-nav-btn').classList.remove('hidden');
         loadAdminData();
         showToast("Inloggad som Admin", "success");
         autoStartTour();

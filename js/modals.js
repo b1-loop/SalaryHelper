@@ -101,9 +101,10 @@ function openEditModal(id) {
     document.getElementById('edit-pin').value              = emp.pin;
     document.getElementById('edit-wage').value             = emp.wage;
     document.getElementById('edit-vacation-days').value    = emp.vacationDaysLeft ?? 25;
-    document.getElementById('edit-startdate').value        = emp.startDate    || '';
-    document.getElementById('edit-department').value       = emp.department   || '';
-    document.getElementById('edit-position').value         = emp.position     || '';
+    document.getElementById('edit-startdate').value        = emp.startDate      || '';
+    document.getElementById('edit-department').value       = emp.department     || '';
+    document.getElementById('edit-position').value         = emp.position       || '';
+    document.getElementById('edit-employment-type').value  = emp.employmentType || '';
     document.getElementById('edit-personnummer').value      = emp.personnummer    || '';
     document.getElementById('edit-phone').value             = emp.phone           || '';
     document.getElementById('edit-email').value             = emp.email           || '';
@@ -138,9 +139,10 @@ function saveEmployeeEdit() {
     emp.pin          = newPin;
     emp.wage         = newWage;
     if (!isNaN(newVacation)) emp.vacationDaysLeft = newVacation;
-    emp.startDate    = (document.getElementById('edit-startdate')?.value     || '');
-    emp.department   = (document.getElementById('edit-department')?.value   || '').trim();
-    emp.position     = (document.getElementById('edit-position')?.value     || '').trim();
+    emp.startDate      = (document.getElementById('edit-startdate')?.value      || '');
+    emp.department     = (document.getElementById('edit-department')?.value    || '').trim();
+    emp.position       = (document.getElementById('edit-position')?.value      || '').trim();
+    emp.employmentType = (document.getElementById('edit-employment-type')?.value || '');
     emp.personnummer   = (document.getElementById('edit-personnummer')?.value    || '').trim();
     emp.phone          = (document.getElementById('edit-phone')?.value          || '').trim();
     emp.email          = (document.getElementById('edit-email')?.value          || '').trim();

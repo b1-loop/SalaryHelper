@@ -55,6 +55,7 @@
                 <div id="network-status" class="network-badge online">🟢 Online</div>
                 <button id="lang-btn" onclick="toggleLanguage()" style="background:rgba(255,255,255,0.08);">🇬🇧 EN</button>
                 <button id="tour-help-btn" class="hidden" onclick="startTour()" style="background: rgba(124,58,237,0.15); color: #a78bfa;" data-i18n="nav_guide">❓ Guide</button>
+                <button id="msg-nav-btn" class="hidden" onclick="scrollToAdminMessages()" style="background:rgba(59,130,246,0.15); color:#93c5fd; position:relative;">💬 <span id="msg-nav-count" style="background:#ef4444; color:#fff; border-radius:10px; padding:0 5px; font-size:0.7rem; margin-left:2px; display:none;"></span></button>
                 <button id="settings-btn" class="hidden" onclick="openSettingsModal()" data-i18n="nav_settings">⚙️ Inställningar</button>
                 <button onclick="toggleDarkMode()" data-i18n="nav_theme">🌙 Tema</button>
                 <button onclick="logout()" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;" data-i18n="nav_logout">Logga ut</button>
@@ -203,7 +204,8 @@
                 <div class="card" id="worker-info-card">
                     <h3 data-i18n="card_employment">📋 Anställningsinformation</h3>
                     <p id="worker-startdate-info" style="color:var(--text-muted); font-size:0.85rem; margin:0 0 0.3rem;"></p>
-                    <p id="worker-dept-info" style="color:var(--text-muted); font-size:0.85rem; margin:0 0 1rem;"></p>
+                    <p id="worker-dept-info" style="color:var(--text-muted); font-size:0.85rem; margin:0 0 0.3rem;"></p>
+                    <p id="worker-emptype-info" style="color:var(--text-muted); font-size:0.85rem; margin:0 0 1rem;"></p>
                     <h4 style="margin:0 0 0.6rem;" data-i18n="card_certs">🎓 Mina Certifikat</h4>
                     <div id="worker-cert-list"></div>
                     <h4 style="margin:1rem 0 0.6rem;">📁 Mina Dokument</h4>
@@ -506,6 +508,15 @@
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 2; min-width: 140px;"><label for="edit-department">Avdelning</label><input type="text" id="edit-department" placeholder="T.ex. Lager, Kassan"></div>
                 <div class="form-group" style="flex: 2; min-width: 140px;"><label for="edit-position">Befattning</label><input type="text" id="edit-position" placeholder="T.ex. Teamledare, Säljare"></div>
+                <div class="form-group" style="flex:1; min-width:160px;"><label for="edit-employment-type">Anställningsform</label>
+                    <select id="edit-employment-type" style="width:100%; padding:0.6rem; border-radius:8px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color);">
+                        <option value="">— Välj —</option>
+                        <option value="Fast heltid">Fast heltid</option>
+                        <option value="Deltid">Deltid</option>
+                        <option value="Timvikarie">Timvikarie</option>
+                        <option value="Provanställning">Provanställning</option>
+                    </select>
+                </div>
             </div>
 
             <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--card-border);">

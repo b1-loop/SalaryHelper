@@ -77,6 +77,8 @@ function loadWorkerView() {
         const parts = [currentUser.department, currentUser.position].filter(Boolean);
         deptEl.innerText = parts.length ? `🏢 ${parts.join(' — ')}` : '';
     }
+    const emptypeEl = document.getElementById('worker-emptype-info');
+    if (emptypeEl) emptypeEl.innerText = currentUser.employmentType ? `📋 ${currentUser.employmentType}` : '';
 
     // Egna certifikat (read-only)
     const certList = document.getElementById('worker-cert-list');
@@ -689,8 +691,11 @@ function completeScheduledShift(index) {
 
     currentUser.schedule.splice(index, 1);
 
+    const holidays   = getSwedishHolidays(new Date(shift.day).getFullYear());
+    const holidayName = holidays[shift.day];
     addLog(`Slutförde schemalagt pass ${shift.day} ${shift.time} — ${totalHrs.toFixed(2)}h (OB: ${split.obHours.toFixed(2)}h, OT: ${otHours.toFixed(2)}h)`);
     saveData(); loadWorkerView();
+    if (holidayName) showToast(`🔴 Röd dag: ${holidayName} — alla timmar räknas som OB!`, 'warning');
     showToast(`Pass klart! ${totalHrs.toFixed(2)}h (OB: ${split.obHours.toFixed(2)}h, OT: ${otHours.toFixed(2)}h)`, "success");
 }
 
