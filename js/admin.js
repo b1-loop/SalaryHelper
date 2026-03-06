@@ -172,6 +172,7 @@ function loadAdminData() {
     renderRanking();
     renderShiftPool();
     renderScheduleWarnings();
+    renderLoginStats();
 
     if (!sessionStorage.getItem('tt_anniversaries_checked')) {
         sessionStorage.setItem('tt_anniversaries_checked', '1');
@@ -1172,4 +1173,76 @@ function removeFromPool(shiftId) {
     localStorage.setItem(SHIFT_POOL_KEY, JSON.stringify(pool));
     showToast('Pass borttaget från poolen.', 'warning');
     renderShiftPool();
+}
+
+// ================================================================
+// INLOGGNINGSSTATISTIK
+// ================================================================
+function renderLoginStats() {
+    const canvas = document.getElementById('login-stats-chart');
+    if (!canvas) return;
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const labels = [];
+    const data   = [];
+
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        labels.push(d.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }));
+        let count = 0;
+        employees.filter(e => e.role !== 'admin').forEach(emp => {
+            (emp.loginHistory || []).forEach(ts => {
+                const ld = new Date(ts); ld.setHours(0, 0, 0, 0);
+                if (ld.getTime() === d.getTime()) count++;
+            });
+        });
+        data.push(count);
+    }
+
+    const isDark    = document.body.classList.contains('dark-mode');
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+
+    if (window._loginChart) window._loginChart.destroy();
+    window._loginChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Inloggningar',
+                data,
+                backgroundColor: 'rgba(59,130,246,0.5)',
+                borderColor: '#3b82f6',
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: textColor, maxTicksLimit: 10 }, grid: { display: false } },
+                y: { ticks: { color: textColor, stepSize: 1 }, beginAtZero: true, precision: 0 }
+            }
+        }
+    });
+
+    // Per-employee table
+    const list = document.getElementById('login-stats-list');
+    if (!list) return;
+    const thirtyAgo = today.getTime() - 30 * 24 * 60 * 60 * 1000;
+    const rows = employees.filter(e => e.role !== 'admin').map(emp => {
+        const count30 = (emp.loginHistory || []).filter(ts => ts >= thirtyAgo).length;
+        const last    = emp.lastLogin
+            ? new Date(emp.lastLogin).toLocaleDateString('sv-SE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+            : '—';
+        return { name: emp.name, count30, last };
+    }).sort((a, b) => b.count30 - a.count30);
+
+    list.innerHTML = rows.map(r => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid var(--card-border); font-size:0.85rem; flex-wrap:wrap; gap:0.25rem;">
+            <span style="font-weight:600;">${escapeHtml(r.name)}</span>
+            <span style="color:var(--text-muted); font-size:0.78rem;">Senast: ${r.last}</span>
+            <span style="color:#3b82f6; font-weight:700;">${r.count30} inloggn.</span>
+        </div>`).join('');
 }

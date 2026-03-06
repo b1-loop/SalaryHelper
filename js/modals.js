@@ -119,6 +119,7 @@ function openEditModal(id) {
     renderModalCertifications(id);
     renderModalDocuments(id);
     renderModalTemplates(id);
+    renderDefaultWeek(id);
     document.getElementById('edit-modal').classList.add('active');
 }
 
@@ -404,6 +405,77 @@ function deleteTemplate(templateId, empId) {
     saveData();
     renderModalTemplates(empId);
     showToast('Mall raderad.', 'success');
+}
+
+// ================================================================
+// STANDARDVECKA PER ANSTÄLLD
+// ================================================================
+const _dwDayNames = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'];
+
+function renderDefaultWeek(empId) {
+    const emp  = employees.find(e => e.id === empId);
+    const grid = document.getElementById('default-week-grid');
+    if (!emp || !grid) return;
+    const dw = emp.defaultWeek || {};
+    grid.innerHTML = _dwDayNames.map((name, i) => {
+        const parts = (dw[i] || '').split(' - ');
+        const s = parts[0] || '';
+        const e = parts[1] || '';
+        return `<div style="display:grid; grid-template-columns:80px 1fr 12px 1fr; gap:0.4rem; align-items:center;">
+            <span style="font-size:0.85rem; font-weight:600; color:${i >= 5 ? '#ef4444' : 'inherit'};">${name}</span>
+            <input type="time" id="dw-s-${i}" value="${escapeHtml(s)}" style="padding:0.4rem; border-radius:6px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color);">
+            <span style="text-align:center; color:var(--text-muted); font-size:0.8rem;">–</span>
+            <input type="time" id="dw-e-${i}" value="${escapeHtml(e)}" style="padding:0.4rem; border-radius:6px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color);">
+        </div>`;
+    }).join('');
+}
+
+function saveDefaultWeek() {
+    const id  = document.getElementById('edit-emp-id').value;
+    const emp = employees.find(e => e.id === id);
+    if (!emp) return;
+    const dw = {};
+    for (let i = 0; i < 7; i++) {
+        const s = document.getElementById(`dw-s-${i}`)?.value;
+        const e = document.getElementById(`dw-e-${i}`)?.value;
+        if (s && e && s < e) dw[i] = `${s} - ${e}`;
+    }
+    emp.defaultWeek = dw;
+    saveData();
+    showToast('Standardvecka sparad!', 'success');
+}
+
+function applyDefaultWeek() {
+    const id    = document.getElementById('edit-emp-id').value;
+    const emp   = employees.find(e => e.id === id);
+    const weeks = parseInt(document.getElementById('default-week-weeks').value, 10) || 4;
+    if (!emp) return;
+    if (!emp.defaultWeek || !Object.keys(emp.defaultWeek).length) {
+        return showToast('Spara en standardvecka först.', 'warning');
+    }
+    // Find next Monday
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const dow = now.getDay(); // 0=Sun
+    const nextMon = new Date(now);
+    nextMon.setDate(now.getDate() + (dow === 0 ? 1 : 8 - dow));
+
+    let added = 0;
+    for (let w = 0; w < weeks; w++) {
+        for (let d = 0; d < 7; d++) {
+            if (emp.defaultWeek[d] === undefined) continue;
+            const date = new Date(nextMon);
+            date.setDate(nextMon.getDate() + w * 7 + d);
+            const dateStr = date.toISOString().slice(0, 10);
+            if (!emp.schedule.some(s => s.day === dateStr)) {
+                emp.schedule.push({ day: dateStr, time: emp.defaultWeek[d] });
+                added++;
+            }
+        }
+    }
+    emp.schedule.sort((a, b) => a.day.localeCompare(b.day));
+    saveData();
+    renderModalSchedule(id);
+    showToast(`${added} pass tillagda från standardvecka!`, 'success');
 }
 
 // ================================================================

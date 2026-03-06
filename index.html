@@ -510,6 +510,13 @@
                     </div>
                     <div id="shift-pool-list" style="margin-top:0.75rem;"></div>
                 </div>
+
+                <!-- Inloggningsstatistik -->
+                <div class="card" style="margin-top:1.5rem;">
+                    <h3>📊 Inloggningsstatistik (30 dagar)</h3>
+                    <canvas id="login-stats-chart" height="160"></canvas>
+                    <div id="login-stats-list" style="margin-top:1rem;"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -677,6 +684,21 @@
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:flex-end;">
                 <div class="form-group" style="flex:2; min-width:150px; margin-bottom:0;"><label>Mallnamn</label><input type="text" id="modal-template-name" placeholder="T.ex. Standardvecka"></div>
                 <button class="btn btn-secondary" style="width:auto; margin-top:0;" onclick="saveCurrentWeekAsTemplate()" title="Sparar passmönstret från innevarande vecka">💾 Spara vecka som mall</button>
+            </div>
+
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--card-border);">
+            <h4 style="margin: 0 0 0.4rem;">⭐ Standardvecka</h4>
+            <p style="color:var(--text-muted); font-size:0.82rem; margin:0 0 0.75rem;">Personens normala arbetsvecka. Tomma rader = ledigt den dagen.</p>
+            <div id="default-week-grid" style="display:grid; gap:0.4rem;"></div>
+            <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.75rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary" style="width:auto;" onclick="saveDefaultWeek()">💾 Spara standardvecka</button>
+                <select id="default-week-weeks" style="padding:0.5rem; border-radius:8px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-color);">
+                    <option value="4">4 veckor</option>
+                    <option value="8">8 veckor</option>
+                    <option value="12">12 veckor</option>
+                    <option value="26">26 veckor</option>
+                </select>
+                <button class="btn btn-primary" style="width:auto;" onclick="applyDefaultWeek()">▶ Applicera framåt</button>
             </div>
         </div>
     </div>

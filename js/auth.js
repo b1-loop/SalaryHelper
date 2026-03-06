@@ -80,6 +80,9 @@ function doLogin() {
     _loginLockedUntil = 0;
 
     currentUser.lastLogin = Date.now();
+    if (!currentUser.loginHistory) currentUser.loginHistory = [];
+    currentUser.loginHistory.push(Date.now());
+    if (currentUser.loginHistory.length > 90) currentUser.loginHistory.shift();
     saveData();
 
     document.getElementById('login-screen').classList.add('hidden');
