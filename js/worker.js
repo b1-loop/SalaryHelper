@@ -50,7 +50,7 @@ function loadWorkerView() {
     if (reqDaysLeft) reqDaysLeft.innerText = (currentUser.vacationDaysLeft ?? 25) + ' st';
 
     // Lönedag-nedräkning
-    const payday = parseInt(localStorage.getItem('tt_payday') || '25');
+    const payday = parseInt(localStorage.getItem('tt_payday') || '25', 10);
     const now2   = new Date();
     let nextPay  = new Date(now2.getFullYear(), now2.getMonth(), payday);
     if (nextPay <= now2) nextPay = new Date(now2.getFullYear(), now2.getMonth() + 1, payday);
@@ -95,7 +95,7 @@ function loadWorkerView() {
                 const color   = expired ? '#ef4444' : soon ? '#f97316' : '#10b981';
                 const label   = expired ? `⚠️ Utgången!` : c.expiryDate ? (soon ? `⏰ ${days} dagar kvar` : `✅ t.o.m. ${c.expiryDate}`) : '✅';
                 return `<div style="display:flex; justify-content:space-between; padding:0.35rem 0; border-bottom:1px solid var(--card-border);">
-                    <span style="font-size:0.9rem;">${c.name}</span>
+                    <span style="font-size:0.9rem;">${escapeHtml(c.name)}</span>
                     <span style="color:${color}; font-size:0.8rem; font-weight:600;">${label}</span>
                 </div>`;
             }).join('');
@@ -126,8 +126,8 @@ function loadWorkerView() {
         } else {
             docList.innerHTML = docs.map(doc => `
                 <div style="padding:0.4rem 0; border-bottom:1px solid var(--card-border);">
-                    <a href="${doc.data}" download="${doc.name}" style="color:#3b82f6; font-size:0.9rem; text-decoration:none;">📄 ${doc.name}</a>
-                    <span style="color:var(--text-muted); font-size:0.75rem; margin-left:0.5rem;">${doc.uploadedAt}</span>
+                    <a href="${doc.data}" download="${escapeHtml(doc.name)}" style="color:#3b82f6; font-size:0.9rem; text-decoration:none;">📄 ${escapeHtml(doc.name)}</a>
+                    <span style="color:var(--text-muted); font-size:0.75rem; margin-left:0.5rem;">${escapeHtml(doc.uploadedAt)}</span>
                 </div>`).join('');
         }
     }
@@ -844,7 +844,7 @@ function submitSwapRequest() {
     if (!upcoming.length || !shiftSel?.value && shiftSel?.value !== '0') return showToast('Inga kommande pass att byta', 'warning');
     if (!empSel?.value) return showToast('Välj en kollega', 'warning');
 
-    const myShift = upcoming[parseInt(shiftSel.value)];
+    const myShift = upcoming[parseInt(shiftSel.value, 10)];
     const target  = employees.find(e => e.id === empSel.value);
     if (!myShift || !target) return showToast('Ogiltigt val', 'error');
 
@@ -907,9 +907,9 @@ function renderIncomingSwapRequests() {
         incoming.map(r => `
         <div style="padding:0.5rem 0; border-bottom:1px solid var(--card-border);">
             <div style="font-size:0.85rem; margin-bottom:0.4rem;">
-                <strong>${r.fromEmpName}</strong> vill ge dig sitt pass:
-                <strong style="color:#3b82f6;">${r.myShift.day} ${r.myShift.time}</strong>
-                ${r.note ? `<div style="color:var(--text-muted); font-size:0.78rem; font-style:italic;">"${r.note}"</div>` : ''}
+                <strong>${escapeHtml(r.fromEmpName)}</strong> vill ge dig sitt pass:
+                <strong style="color:#3b82f6;">${escapeHtml(r.myShift.day)} ${escapeHtml(r.myShift.time)}</strong>
+                ${r.note ? `<div style="color:var(--text-muted); font-size:0.78rem; font-style:italic;">"${escapeHtml(r.note)}"</div>` : ''}
             </div>
             <div style="display:flex; gap:0.5rem;">
                 <button class="btn-sm" style="background:#10b981;" onclick="acceptIncomingSwap('${r.fromEmpId}','${r.id}')">✅ Acceptera</button>
@@ -1084,7 +1084,7 @@ function renderOpenShifts() {
             <div>
                 <strong style="font-size:0.9rem;">${s.date}</strong>
                 <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.5rem;">${s.time}</span>
-                ${s.description ? `<span style="display:block; font-size:0.8rem; color:var(--text-muted);">${s.description}</span>` : ''}
+                ${s.description ? `<span style="display:block; font-size:0.8rem; color:var(--text-muted);">${escapeHtml(s.description)}</span>` : ''}
             </div>
             <button class="btn-sm ${applied ? 'btn-delete' : 'btn-edit'}" style="font-size:0.8rem;"
                 onclick="${applied ? `cancelShiftApply('${s.id}')` : `applyForShift('${s.id}')`}">
@@ -1122,7 +1122,7 @@ function addRecurringShifts() {
     const selected  = [0,1,2,3,4,5,6].filter(i => document.getElementById(`recur-day-${i}`)?.checked);
     const startTime = document.getElementById('recur-start').value;
     const endTime   = document.getElementById('recur-end').value;
-    const weeks     = parseInt(document.getElementById('recur-weeks').value) || 4;
+    const weeks     = parseInt(document.getElementById('recur-weeks').value, 10) || 4;
 
     if (!selected.length)     return showToast('Välj minst en veckodag.', 'warning');
     if (!startTime || !endTime) return showToast('Fyll i start- och sluttid.', 'warning');

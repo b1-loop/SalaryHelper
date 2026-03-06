@@ -69,8 +69,13 @@ employees.forEach(emp => {
 });
 
 function saveData() {
-    localStorage.setItem(DB_KEY,         JSON.stringify(employees));
-    localStorage.setItem(LOGS_KEY,       JSON.stringify(logs));
-    localStorage.setItem(MESSAGES_KEY,   JSON.stringify(adminMessages));
-    localStorage.setItem(TEMPLATES_KEY,  JSON.stringify(scheduleTemplates));
+    try {
+        localStorage.setItem(DB_KEY,         JSON.stringify(employees));
+        localStorage.setItem(LOGS_KEY,       JSON.stringify(logs));
+        localStorage.setItem(MESSAGES_KEY,   JSON.stringify(adminMessages));
+        localStorage.setItem(TEMPLATES_KEY,  JSON.stringify(scheduleTemplates));
+    } catch (e) {
+        console.error('Kunde inte spara data (localStorage fullt?):', e);
+        showToast('⚠️ Kunde inte spara — lagringen kan vara full.', 'error');
+    }
 }

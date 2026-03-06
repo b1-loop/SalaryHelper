@@ -138,8 +138,8 @@ function saveEmployeeEdit() {
     const emp         = employees.find(e => e.id === id);
     const newName     = document.getElementById('edit-name').value;
     const newPin      = document.getElementById('edit-pin').value;
-    const newWage     = parseInt(document.getElementById('edit-wage').value);
-    const newVacation = parseInt(document.getElementById('edit-vacation-days').value);
+    const newWage     = parseInt(document.getElementById('edit-wage').value, 10);
+    const newVacation = parseInt(document.getElementById('edit-vacation-days').value, 10);
 
     if (!emp) return showToast("Anställd ej hittad.", "error");
     if (!newName || !newPin || isNaN(newWage)) return showToast("Fyll i alla fält.", "warning");
@@ -282,10 +282,10 @@ function addShiftFromModal() {
 // ================================================================
 function addRecurringShift() {
     const id        = document.getElementById('edit-emp-id').value;
-    const targetDay = parseInt(document.getElementById('modal-recur-day').value);
+    const targetDay = parseInt(document.getElementById('modal-recur-day').value, 10);
     const startTime = document.getElementById('modal-recur-start').value;
     const endTime   = document.getElementById('modal-recur-end').value;
-    const weeks     = parseInt(document.getElementById('modal-recur-weeks').value);
+    const weeks     = parseInt(document.getElementById('modal-recur-weeks').value, 10);
 
     if (!startTime || !endTime) return showToast("Fyll i starttid och sluttid.", "warning");
     if (startTime >= endTime)   return showToast("Sluttiden måste vara efter start.", "error");
@@ -326,7 +326,7 @@ function renderModalTemplates(empId) {
         const desc = t.shifts.map(s => `${dayNames[s.dow]} ${s.start}`).join(', ');
         return `<div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; padding:0.5rem 0; border-bottom:1px solid var(--card-border); flex-wrap:wrap;">
             <div style="flex:1; min-width:120px;">
-                <strong style="font-size:0.9rem;">${t.name}</strong>
+                <strong style="font-size:0.9rem;">${escapeHtml(t.name)}</strong>
                 <span style="color:var(--text-muted); font-size:0.75rem; display:block;">${desc}</span>
             </div>
             <div style="display:flex; gap:0.4rem; align-items:center; flex-shrink:0;">
@@ -375,7 +375,7 @@ function applyTemplate(templateId, empId) {
     const emp      = employees.find(e => e.id === empId);
     if (!template || !emp) return;
 
-    const weeks = parseInt(document.getElementById(`tpl-weeks-${templateId}`)?.value || '4');
+    const weeks = parseInt(document.getElementById(`tpl-weeks-${templateId}`)?.value || '4', 10);
 
     const now = new Date(); now.setHours(0, 0, 0, 0);
     let dow = now.getDay(); if (dow === 0) dow = 7;
@@ -722,7 +722,7 @@ function renderModalCertifications(id) {
         const color   = expired ? '#ef4444' : soon ? '#f97316' : '#10b981';
         const label   = expired ? `⚠️ Utgången (${c.expiryDate})` : c.expiryDate ? (soon ? `⏰ ${certDaysLeft(c.expiryDate)} dagar kvar` : `✅ t.o.m. ${c.expiryDate}`) : '✅ Inget datum';
         return `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid var(--card-border); gap:0.5rem; flex-wrap:wrap;">
-            <div><strong style="font-size:0.9rem;">${c.name}</strong> <span style="color:${color}; font-size:0.8rem;">${label}</span></div>
+            <div><strong style="font-size:0.9rem;">${escapeHtml(c.name)}</strong> <span style="color:${color}; font-size:0.8rem;">${label}</span></div>
             <button class="btn-sm btn-delete" onclick="removeCertification('${id}', ${i})">✖</button>
         </div>`;
     }).join('');
@@ -863,7 +863,7 @@ function addManualSession() {
     const hours = parseFloat(document.getElementById('manual-hours').value) || 0;
     const ob    = parseFloat(document.getElementById('manual-ob').value)    || 0;
     const ot    = parseFloat(document.getElementById('manual-ot').value)    || 0;
-    const brk   = parseInt(document.getElementById('manual-break').value)   || 0;
+    const brk   = parseInt(document.getElementById('manual-break').value, 10)   || 0;
     const note  = document.getElementById('manual-note').value.trim();
 
     if (!date)                   return showToast('Välj ett datum.', 'warning');
@@ -944,7 +944,7 @@ function saveSettings() {
     if (msg) localStorage.setItem('tt_admin_message', msg);
     else     localStorage.removeItem('tt_admin_message');
 
-    const payday = parseInt(document.getElementById('payday-input').value);
+    const payday = parseInt(document.getElementById('payday-input').value, 10);
     if (!isNaN(payday) && payday >= 1 && payday <= 31) localStorage.setItem('tt_payday', payday.toString());
 
     // OT threshold
@@ -954,8 +954,8 @@ function saveSettings() {
     // Feature 8: save OB times
     const obEvening = document.getElementById('ob-evening-input').value;
     const obMorning = document.getElementById('ob-morning-input').value;
-    if (obEvening) localStorage.setItem('tt_ob_evening', parseInt(obEvening.split(':')[0]).toString());
-    if (obMorning) localStorage.setItem('tt_ob_morning', parseInt(obMorning.split(':')[0]).toString());
+    if (obEvening) localStorage.setItem('tt_ob_evening', parseInt(obEvening.split(':')[0], 10).toString());
+    if (obMorning) localStorage.setItem('tt_ob_morning', parseInt(obMorning.split(':')[0], 10).toString());
 
     updateCompanyName();
     closeSettingsModal();
@@ -1019,8 +1019,8 @@ function renderModalDocuments(id) {
     list.innerHTML = docs.map(doc => `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid var(--card-border);">
             <div>
-                <a href="${doc.data}" download="${doc.name}" style="color:#3b82f6; font-size:0.9rem; text-decoration:none;">📄 ${doc.name}</a>
-                <span style="color:var(--text-muted); font-size:0.75rem; margin-left:0.5rem;">${doc.uploadedAt}</span>
+                <a href="${doc.data}" download="${escapeHtml(doc.name)}" style="color:#3b82f6; font-size:0.9rem; text-decoration:none;">📄 ${escapeHtml(doc.name)}</a>
+                <span style="color:var(--text-muted); font-size:0.75rem; margin-left:0.5rem;">${escapeHtml(doc.uploadedAt)}</span>
             </div>
             <button class="btn-sm btn-delete" onclick="deleteDocument('${id}', '${doc.id}')">✖</button>
         </div>`).join('');

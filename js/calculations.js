@@ -7,8 +7,8 @@ function isOBTime(date) {
     const dateStr  = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
     if (getSwedishHolidays(date.getFullYear())[dateStr]) return true;
     const minutes   = date.getHours() * 60 + date.getMinutes();
-    const obMorning = parseInt(localStorage.getItem('tt_ob_morning') || '7');
-    const obEvening = parseInt(localStorage.getItem('tt_ob_evening') || '18');
+    const obMorning = parseInt(localStorage.getItem('tt_ob_morning') || '7', 10);
+    const obEvening = parseInt(localStorage.getItem('tt_ob_evening') || '18', 10);
     return minutes < obMorning * 60 || minutes >= obEvening * 60;
 }
 

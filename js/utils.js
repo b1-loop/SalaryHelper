@@ -1,4 +1,17 @@
 // ================================================================
+// 1b. XSS-SKYDD
+// ================================================================
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ================================================================
 // 2. RÖDA DAGAR (svenska helgdagar)
 // ================================================================
 function getEasterDate(year) {
@@ -87,7 +100,7 @@ function renderLogs() {
         : logs;
 
     list.innerHTML = filtered.slice(0, logDisplayCount)
-        .map(l => `<li><span><strong>${l.name}</strong>: ${l.action}</span><span class="log-time">${l.time}</span></li>`)
+        .map(l => `<li><span><strong>${escapeHtml(l.name)}</strong>: ${escapeHtml(l.action)}</span><span class="log-time">${escapeHtml(l.time)}</span></li>`)
         .join('');
 
     const btn = document.getElementById('log-show-more');

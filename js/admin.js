@@ -81,7 +81,7 @@ function loadAdminData() {
             : '';
 
         tbody.innerHTML += `<tr class="employee-row">
-            <td class="emp-name">${avatarHtml}<strong class="clickable-name" onclick="openEditModal('${emp.id}')">${emp.name}</strong><br><small style="color:var(--text-muted)">${emp.wage} kr/h${emp.department ? ` · ${emp.department}` : ''}${emp.position ? ` · ${emp.position}` : ''}${emp.employmentType ? ` · ${emp.employmentType}` : ''}${absenceBadge}</small>${emp.lastLogin ? `<br><small style="color:var(--text-muted)">🕐 ${new Date(emp.lastLogin).toLocaleDateString(getLangLocale(), { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}</small>` : ''}</td>
+            <td class="emp-name">${avatarHtml}<strong class="clickable-name" onclick="openEditModal('${emp.id}')">${escapeHtml(emp.name)}</strong><br><small style="color:var(--text-muted)">${emp.wage} kr/h${emp.department ? ` · ${escapeHtml(emp.department)}` : ''}${emp.position ? ` · ${escapeHtml(emp.position)}` : ''}${emp.employmentType ? ` · ${escapeHtml(emp.employmentType)}` : ''}${absenceBadge}</small>${emp.lastLogin ? `<br><small style="color:var(--text-muted)">🕐 ${new Date(emp.lastLogin).toLocaleDateString(getLangLocale(), { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })}</small>` : ''}</td>
             <td><span class="badge ${emp.status.toLowerCase()}">${emp.status}</span></td>
             <td>${totHrs.toFixed(2)}h</td>
             <td style="color: #8b5cf6; font-weight:bold;">${obHrs.toFixed(2)}h</td>
@@ -127,7 +127,7 @@ function filterTable() {
 function addEmployee() {
     const name = document.getElementById('new-name').value;
     const pin  = document.getElementById('new-pin').value;
-    const wage = parseInt(document.getElementById('new-wage').value);
+    const wage = parseInt(document.getElementById('new-wage').value, 10);
 
     if (!name || !pin || isNaN(wage)) return showToast("Fyll i namn, PIN och lön.", "warning");
     if (employees.find(e => e.pin === pin)) return showToast("PIN-koden används redan!", "error");
@@ -173,7 +173,7 @@ function renderCertWarnings() {
         const color = w.days < 0 ? '#ef4444' : w.days <= 30 ? '#f97316' : '#f59e0b';
         const label = w.days < 0 ? `⚠️ Utgick ${w.expiryDate}` : w.days === 0 ? '⚠️ Utgår idag!' : `⏰ ${w.days} dagar kvar (${w.expiryDate})`;
         return `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0; border-bottom:1px solid var(--card-border); flex-wrap:wrap; gap:0.25rem;">
-            <span><strong>${w.empName}</strong> — ${w.certName}</span>
+            <span><strong>${escapeHtml(w.empName)}</strong> — ${escapeHtml(w.certName)}</span>
             <span style="color:${color}; font-weight:700; font-size:0.85rem;">${label}</span>
         </div>`;
     }).join('');
@@ -201,10 +201,10 @@ function renderPendingRequests() {
     list.innerHTML = pending.map(r => `
         <div style="padding:0.75rem 0; border-bottom:1px solid var(--card-border);">
             <div style="margin-bottom:0.4rem;">
-                <strong>${r.empName}</strong>
-                <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">${r.startDate} – ${r.endDate} (${r.days} dag${r.days !== 1 ? 'ar' : ''})</span>
+                <strong>${escapeHtml(r.empName)}</strong>
+                <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">${escapeHtml(r.startDate)} – ${escapeHtml(r.endDate)} (${r.days} dag${r.days !== 1 ? 'ar' : ''})</span>
                 <span style="color:var(--text-muted); font-size:0.8rem; margin-left:0.4rem;">| Saldo: ${r.daysLeft} dagar</span>
-                ${r.reason ? `<div style="color:var(--text-muted); font-size:0.8rem; font-style:italic; margin-top:0.2rem;">"${r.reason}"</div>` : ''}
+                ${r.reason ? `<div style="color:var(--text-muted); font-size:0.8rem; font-style:italic; margin-top:0.2rem;">"${escapeHtml(r.reason)}"</div>` : ''}
             </div>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
                 <input type="text" id="review-note-${r.id}" placeholder="Valfri kommentar till anställd..."
@@ -271,7 +271,7 @@ function renderOvertimeReport() {
         const color = d.otHrs > 20 ? '#ef4444' : d.otHrs > 10 ? '#f97316' : '#f59e0b';
         return `<div style="margin-bottom:0.75rem;">
             <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
-                <span>${d.name}</span>
+                <span>${escapeHtml(d.name)}</span>
                 <span style="color:${color}; font-weight:700;">${d.otHrs.toFixed(1)}h övertid</span>
             </div>
             <div style="height:8px; background:var(--stat-bg); border-radius:4px;">
@@ -352,7 +352,7 @@ function renderSharedCalendar() {
         }
         if (data?.absences?.length) {
             content += data.absences.map(a =>
-                `<span style="display:block; font-size:0.6rem; color:${a.type === 'vacation' ? '#10b981' : '#ef4444'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${a.name} ${a.type === 'vacation' ? '🏖️' : '🤒'}</span>`
+                `<span style="display:block; font-size:0.6rem; color:${a.type === 'vacation' ? '#10b981' : '#ef4444'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(a.name)} ${a.type === 'vacation' ? '🏖️' : '🤒'}</span>`
             ).join('');
         }
         if (data?.available?.length) {
@@ -576,7 +576,7 @@ function checkAnniversaries() {
 
         // Arbetsdag-jubileum
         if (emp.startDate && emp.startDate.slice(5) === monthDay) {
-            const years = new Date().getFullYear() - parseInt(emp.startDate.slice(0, 4));
+            const years = new Date().getFullYear() - parseInt(emp.startDate.slice(0, 4), 10);
             if (years > 0) {
                 setTimeout(() => showToast(`🎉 ${emp.name} har jobbat här i ${years} år idag!`, 'success'), delay + 400);
             }
@@ -693,9 +693,9 @@ function renderSwapRequests() {
         readyForAdmin.sort((a, b) => a.createdAt - b.createdAt).forEach(r => {
             html += `<div style="padding:0.75rem 0; border-bottom:1px solid var(--card-border);">
                 <div style="margin-bottom:0.4rem;">
-                    <strong>${r.empName}</strong> vill ge sitt pass till <strong>${r.targetEmpName}</strong>
-                    <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">${r.myShift.day} ${r.myShift.time}</span>
-                    ${r.note ? `<div style="color:var(--text-muted); font-size:0.8rem; font-style:italic; margin-top:0.2rem;">"${r.note}"</div>` : ''}
+                    <strong>${escapeHtml(r.empName)}</strong> vill ge sitt pass till <strong>${escapeHtml(r.targetEmpName)}</strong>
+                    <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">${escapeHtml(r.myShift.day)} ${escapeHtml(r.myShift.time)}</span>
+                    ${r.note ? `<div style="color:var(--text-muted); font-size:0.8rem; font-style:italic; margin-top:0.2rem;">"${escapeHtml(r.note)}"</div>` : ''}
                 </div>
                 <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                     <button class="btn-sm" style="background:#10b981;" onclick="approveSwapRequest('${r.empId}','${r.id}')">✅ Bekräfta byte</button>
@@ -710,8 +710,8 @@ function renderSwapRequests() {
         awaitingPeer.sort((a, b) => a.createdAt - b.createdAt).forEach(r => {
             html += `<div style="padding:0.75rem 0; border-bottom:1px solid var(--card-border); opacity:0.75;">
                 <div>
-                    <strong>${r.empName}</strong> → <strong>${r.targetEmpName}</strong>
-                    <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">${r.myShift.day} ${r.myShift.time}</span>
+                    <strong>${escapeHtml(r.empName)}</strong> → <strong>${escapeHtml(r.targetEmpName)}</strong>
+                    <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.4rem;">${escapeHtml(r.myShift.day)} ${escapeHtml(r.myShift.time)}</span>
                 </div>
                 <div style="margin-top:0.4rem; display:flex; gap:0.5rem;">
                     <button class="btn-sm btn-delete" style="font-size:0.72rem;" onclick="rejectSwapRequest('${r.empId}','${r.id}')">❌ Avbryt förfrågan</button>
@@ -851,7 +851,7 @@ function renderRanking() {
             <span style="font-size:1.2rem; min-width:2rem; text-align:center;">${medals[i] || (i + 1) + '.'}</span>
             <div style="flex:1;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
-                    <span style="font-weight:600;">${w.name}</span>
+                    <span style="font-weight:600;">${escapeHtml(w.name)}</span>
                     <span style="color:#3b82f6; font-weight:700;">${fmt(w)}</span>
                 </div>
                 <div style="height:6px; background:var(--stat-bg); border-radius:3px; overflow:hidden;">
@@ -902,7 +902,7 @@ function renderScheduleWarnings() {
     </p>` + missing.map(emp => `
         <div style="display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0; border-bottom:1px solid var(--card-border);">
             <span>⚠️</span>
-            <span style="font-weight:600;">${emp.name}</span>
+            <span style="font-weight:600;">${escapeHtml(emp.name)}</span>
             <span style="color:var(--text-muted); font-size:0.83rem;">— inga pass inlagda</span>
         </div>`).join('');
 }
@@ -950,9 +950,9 @@ function searchGlobalHistory() {
         const otStr = (s.otHours || 0) > 0 ? `<span style="color:#f97316;"> +${s.otHours.toFixed(1)}h ÖT</span>` : '';
         return `<div style="padding:0.6rem 0; border-bottom:1px solid var(--card-border); display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.25rem;">
             <div>
-                <strong>${emp.name}</strong>
-                <span style="color:var(--text-muted); font-size:0.82rem; margin-left:0.5rem;">${s.date}</span>
-                ${s.note ? `<span style="color:var(--text-muted); font-size:0.82rem; display:block; margin-top:0.15rem;">💬 ${s.note}</span>` : ''}
+                <strong>${escapeHtml(emp.name)}</strong>
+                <span style="color:var(--text-muted); font-size:0.82rem; margin-left:0.5rem;">${escapeHtml(s.date)}</span>
+                ${s.note ? `<span style="color:var(--text-muted); font-size:0.82rem; display:block; margin-top:0.15rem;">💬 ${escapeHtml(s.note)}</span>` : ''}
             </div>
             <div style="text-align:right; font-size:0.85rem; flex-shrink:0;">
                 <span style="color:#3b82f6;">${s.hours.toFixed(1)}h</span>${obStr}${otStr}
@@ -989,7 +989,7 @@ function renderShiftPool() {
             <div>
                 <strong>${s.date}</strong>
                 <span style="color:var(--text-muted); font-size:0.85rem; margin-left:0.5rem;">${s.time}</span>
-                ${s.description ? `<span style="display:block; font-size:0.8rem; color:var(--text-muted);">${s.description}</span>` : ''}
+                ${s.description ? `<span style="display:block; font-size:0.8rem; color:var(--text-muted);">${escapeHtml(s.description)}</span>` : ''}
                 <div style="margin-top:0.3rem;">${applicantBtns || '<span style="font-size:0.75rem; color:var(--text-muted);">Inga sökande ännu</span>'}</div>
             </div>
             <button class="btn-sm btn-delete" style="font-size:0.75rem;" onclick="removeFromPool('${s.id}')">🗑️</button>

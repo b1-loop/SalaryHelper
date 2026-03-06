@@ -19,6 +19,11 @@ function resetInactivityTimer() {
 // ================================================================
 // INLOGGNING
 // ================================================================
+let _loginAttempts  = 0;
+let _loginLockedUntil = 0;
+const MAX_LOGIN_ATTEMPTS = 3;
+const LOGIN_LOCKOUT_MS   = 30_000; // 30 sekunder
+
 function clearPinError() {
     document.getElementById('pin-error').innerText = '';
     document.getElementById('login-pin').classList.remove('shake');
@@ -37,19 +42,42 @@ function pinClear() {
 }
 
 function doLogin() {
+    const now = Date.now();
+    const errEl = document.getElementById('pin-error');
+
+    if (now < _loginLockedUntil) {
+        const secsLeft = Math.ceil((_loginLockedUntil - now) / 1000);
+        errEl.innerText = `Kontot låst — försök igen om ${secsLeft}s`;
+        document.getElementById('login-pin').value = '';
+        return;
+    }
+
     const pin = document.getElementById('login-pin').value;
     currentUser = employees.find(emp => emp.pin === pin);
 
     if (!currentUser) {
+        _loginAttempts++;
         const inp = document.getElementById('login-pin');
         inp.value = '';
         inp.classList.remove('shake');
         void inp.offsetWidth; // reflow to restart animation
         inp.classList.add('shake');
-        document.getElementById('pin-error').innerText = 'Fel PIN-kod';
-        showToast("Fel PIN-kod", "error");
+
+        if (_loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+            _loginLockedUntil = now + LOGIN_LOCKOUT_MS;
+            _loginAttempts    = 0;
+            errEl.innerText   = 'För många försök — låst i 30 sekunder';
+            showToast("För många felaktiga PIN-försök. Låst i 30s.", "error");
+        } else {
+            const left = MAX_LOGIN_ATTEMPTS - _loginAttempts;
+            errEl.innerText = `Fel PIN-kod (${left} försök kvar)`;
+            showToast("Fel PIN-kod", "error");
+        }
         return;
     }
+
+    _loginAttempts  = 0;
+    _loginLockedUntil = 0;
 
     currentUser.lastLogin = Date.now();
     saveData();
